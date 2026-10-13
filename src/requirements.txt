@@ -1,3 +1,6 @@
+# Historical experiment pins, preserved during Nousphera maintenance.
+# This is not a newly validated environment. See ../docs/REPRODUCIBILITY.md,
+# including the Flower simulation / Ray version discrepancy.
 absl-py==1.4.0
 aiohttp==3.8.3
 aiohttp-cors==0.7.0

@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 import numpy as np
 import tensorflow as tf
@@ -10,12 +11,19 @@ from utils.image_utils import cutout_eurosat as cutout
 from utils.noise import inject_synthetic_noise_to_labels
 from utils.shard import shard_data
 
-DATA_FP = f"{os.environ['TFDS_DATA_DIR']}/eurosat/eurosat.npz"
 AUTO = tf.data.experimental.AUTOTUNE
+
+# Nousphera maintenance: defer EuroSAT-specific configuration until it is used.
+def eurosat_data_path():
+	root = Path(os.environ.get('TFDS_DATA_DIR', Path(__file__).resolve().parent))
+	path = root / 'eurosat' / 'eurosat.npz'
+	if not path.is_file():
+		raise FileNotFoundError(f"EuroSAT archive not found: {path}. See docs/REPRODUCIBILITY.md for the required data and embedding order.")
+	return path
 
 def load_eurosat(shard_id=0, num_shards=None, batch_size=128, seed=42, noisy_clients_frac=0.6, noise_lvl=0.4, noise_sparsity=0.4, corrected_labels=None, shuffle=True):
 	np.random.seed(seed)
-	data = np.load(DATA_FP)
+	data = np.load(eurosat_data_path())
 	images, labels = data['images'][:21600], data['labels'][:21600]
 	num_classes = len(np.unique(labels))
 	# Get shard of dataset
@@ -34,7 +42,7 @@ def load_eurosat(shard_id=0, num_shards=None, batch_size=128, seed=42, noisy_cli
 	return ds, num_classes, labels.shape[0], labels, idxs if num_shards is not None else None
 
 def load_eurosat_test(batch_size=128):
-	data = np.load(DATA_FP)
+	data = np.load(eurosat_data_path())
 	images, labels = data['images'][21600:], data['labels'][21600:]
 	num_classes = len(np.unique(labels))
 	labels = np.array(tf.keras.utils.to_categorical(labels, num_classes), dtype=np.float32)

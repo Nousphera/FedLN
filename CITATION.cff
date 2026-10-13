@@ -1,0 +1,36 @@
+cff-version: 1.2.0
+message: "If you use FedLN, please cite the journal article in preferred-citation."
+type: software
+title: "FedLN: Federated Learning with Noisy Labels"
+authors:
+  - family-names: Tsouvalas
+    given-names: Vasileios
+  - family-names: Saeed
+    given-names: Aaqib
+  - family-names: Özçelebi
+    given-names: Tanir
+  - family-names: Meratnia
+    given-names: Nirvana
+repository-code: "https://github.com/Nousphera/FedLN"
+license: Apache-2.0
+preferred-citation:
+  type: article
+  title: "Labeling Chaos to Learning Harmony: Federated Learning with Noisy Labels"
+  authors:
+    - family-names: Tsouvalas
+      given-names: Vasileios
+    - family-names: Saeed
+      given-names: Aaqib
+    - family-names: Özçelebi
+      given-names: Tanir
+    - family-names: Meratnia
+      given-names: Nirvana
+  journal: "ACM Transactions on Intelligent Systems and Technology"
+  volume: "15"
+  issue: "2"
+  number: "22"
+  start: 1
+  end: 26
+  year: 2024
+  doi: "10.1145/3626242"
+  url: "https://doi.org/10.1145/3626242"

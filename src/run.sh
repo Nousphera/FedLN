@@ -1,37 +1,38 @@
+#!/usr/bin/env bash
+# Nousphera maintenance: reliable dispatch and dependency-free launcher help.
+set -euo pipefail
 
-arg1=$1
+usage() {
+    printf '%s\n' \
+        'Usage: ./src/run.sh METHOD [experiment arguments]' \
+        '' \
+        'Methods:' \
+        '  nnc                  Nearest Neighbor Correction' \
+        '  na_fedavg            Noise-Aware Federated Averaging' \
+        '  akd                  Adaptive Knowledge Distillation' \
+        '  fedavg               Federated Averaging' \
+        '  bi_tempered_loss      FedAvg with bi-tempered logistic loss' \
+        '  label_smoothing      FedAvg with label smoothing' \
+        '  confidence_learning  FedAvg with confident learning' \
+        '  centralized          Centralized training' \
+        '' \
+        'Use METHOD --help to list experiment arguments.' \
+        'Relative data/cache paths are resolved from src/. Activate your Python environment first.'
+}
+
+case "${1:-}" in
+    -h|--help) usage; exit 0 ;;
+    "") usage >&2; exit 2 ;;
+    centralized) entry="baselines/centralized.py" ;;
+    fedavg) entry="baselines/fedavg__standard.py" ;;
+    confidence_learning) entry="baselines/fedavg__cl.py" ;;
+    bi_tempered_loss) entry="baselines/fedavg__loss.py" ;;
+    label_smoothing) entry="baselines/fedavg__smooth.py" ;;
+    nnc) entry="fedln/fedln__nnc.py" ;;
+    na_fedavg) entry="fedln/fedln__nafedavg.py" ;;
+    akd) entry="fedln/fedln__akd.py" ;;
+    *) printf 'Unknown method: %s\n' "$1" >&2; usage >&2; exit 2 ;;
+esac
 shift
-if [ "$arg1" == "centralized" ]; then
-	echo "Running centralized training"
-	python ./baselines/centrlized.py "$@"
-
-elif [ "$arg1" == "fedavg" ]; then
-	echo "Running FL with FedAvg"
-	python ./baselines/fedavg__standard.py "$@"
-
-elif [ "$arg1" == "confidence_learning" ]; then
-	echo "Running FL with confidence learning"
-	python ./baselines/fedavg__cl.py "$@"
-
-elif [ "$arg1" == "bi_tempered_loss" ]; then
-	echo "Running FL with Bi-Tempered loss"
-	python ./baselines/fedavg__loss.py "$@"
-
-elif [ "$arg1" == "label_smoothing" ]; then
-	echo "Running FL with label smoothing"
-	python ./baselines/fedavg__smooth.py "$@"
-
-elif [ "$arg1" == "nnc" ]; then
-	echo "Running FL with nearest neighbor correction"
-	python ./fedln/fedln__nnc.py "$@"
-
-elif [ "$arg1" == "na_fedavg" ]; then
-	echo "Running FL with nearest Noise-Aware FedAvg"
-	python ./fedln/fedln__nafedavg.py "$@"
-
-elif [ "$arg1" == "akd" ]; then
-	echo "Running FL with Adaptive Knowledge Distillation"
-	python ./fedln/fedln__akd.py "$@"
-else
-	echo "Invalid method provided."
-fi
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
+exec python "$entry" "$@"

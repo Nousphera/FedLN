@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Nousphera maintenance: repository links, final publication identity, and result provenance. -->
 <html>
   <head>
     <meta charset="utf-8">
@@ -32,13 +33,14 @@
         <div class="row">
           <div class="col-lg-10">
             <h2>
-              <b>We propose a framework to detect and correct noisy labels in a federated learning regime. Our methods achieve superior performance across tasks and a wide range of label noise profiles. </b>
+              <b>FedLN estimates client label noise and addresses it through initialization, local training, or server aggregation. </b>
             </h2>
             <p>
-              <a class="btn btn-default" href="https://arxiv.org/pdf/2208.09378.pdf">Read The Paper</a> <a class="btn btn-default" href="https://github.com/FederatedML/FedLN">Code</a>
+              <a class="btn btn-default" href="https://doi.org/10.1145/3626242">Read The Paper</a> <a class="btn btn-default" href="https://github.com/Nousphera/FedLN">Code</a>
             </p>
             <h2>Abstract</h2>
-            <p>Federated Learning (FL) is a distributed machine learning paradigm that enables learning models from decentralized private datasets, where the labeling effort is entrusted to the clients. While most existing FL approaches assume high-quality labels are readily available on users' devices, in reality, label noise can naturally occur in FL and follows a non-i.i.d. distribution among clients. Due to the non-iid-ness challenges, existing state-of-the-art centralized approaches exhibit unsatisfactory performance. At the same time, previous FL studies rely on data exchange or repeated server-side aid to improve the model's performance. Here, we propose FedLN, a framework to deal with label noise across different FL training stages: FL initialization, on-device model training, and server model aggregation. Specifically, FedLN computes per-client noise-level estimation in a single federated round and improves the models' performance by correcting (or limiting the effect of) noisy samples. Extensive experiments on various publicly available vision and audio datasets demonstrate a 24% improvement on average compared to other existing methods for a label noise level of 70%. We further validate the efficiency of FedLN in human-annotated real-world noisy datasets and report a 9% increase on average in models' recognition rate, highlighting that FedLN can be useful for improving FL services provided to everyday users.</p>
+            <p>FedLN studies learning from noisy labels in federated systems, where data remain on clients and labeling quality varies between devices. Its three methods use client noise estimates for nearest-neighbor label correction, adaptive knowledge distillation, or noise-aware model aggregation. The journal paper evaluates these approaches on vision and audio tasks; the public implementation includes CIFAR-10 and EuroSAT experiment entry points.</p>
+            <p>This independent <a href="https://github.com/Nousphera/FedLN">Nousphera copy</a> preserves the original <a href="https://github.com/FederatedML/FedLN">FederatedML research repository</a> and attribution. See the <a href="https://github.com/Nousphera/FedLN/blob/main/docs/REPRODUCIBILITY.md">reproduction notes</a> for data requirements and retained implementation limitations.</p>
           </div>
         </div>
       </div>
@@ -113,7 +115,8 @@
       <div class="container">
         <div class="row">
           <div class="col-lg-10">
-            <h2>Results</h2>
+            <h2>Reported Research Results</h2>
+            <p>The figures below are retained from the original research project page. They were not regenerated during repository maintenance; consult the final journal article for experimental protocols and results.</p>
             <p>The evaluation of FedLN considers a wide range of label noise scenarios, including noisy real-life data, across multiple classification tasks from both vision and audio domains. State-of-the-art centralized approaches dealing with label noises are considered in our baselines, providing insides into why such techniques can result in unsatisfactory model performance. <br>
               <br>
             </p>
@@ -137,12 +140,16 @@
         <div class="row">
           <div class="col-lg-10">
             <h2>Citation</h2>
-            <p style="text-align: justify;">Vasileios Tsouvalas, Aaqib Saeed, Tanir Ozcelebi, and Nirvana Meratnia. 2023. Labeling Chaos to Learning Harmony: Federated Learning with Noisy Labels. ACM Transactions on Intelligent Systems and Technology. https://doi.org/10.1145/3626242</p>
+            <p style="text-align: justify;">Vasileios Tsouvalas, Aaqib Saeed, Tanir Ozcelebi, and Nirvana Meratnia. 2024. Labeling Chaos to Learning Harmony: Federated Learning with Noisy Labels. ACM Transactions on Intelligent Systems and Technology 15(2), Article 22, pages 1–26. <a href="https://doi.org/10.1145/3626242">doi:10.1145/3626242</a></p>
             <h3>BibTeX</h3>
             <pre>@article{10.1145/3626242,
     author = {Tsouvalas, Vasileios and Saeed, Aaqib and Ozcelebi, Tanir and Meratnia, Nirvana},
     title = {Labeling Chaos to Learning Harmony: Federated Learning with Noisy Labels},
-    year = {2023},
+    year = {2024},
+    volume = {15},
+    number = {2},
+    articleno = {22},
+    numpages = {26},
     publisher = {Association for Computing Machinery},
     issn = {2157-6904},
     url = {https://doi.org/10.1145/3626242},
@@ -165,7 +172,7 @@
     <footer>
       <div class="container">
         <div class="text-center">
-          <p>Federated Learning with Noisy Labels - 2022</p>
+          <p>FedLN · ACM TIST 2024 · Original research by Tsouvalas, Saeed, Ozcelebi, and Meratnia</p>
         </div>
       </div>
     </footer>

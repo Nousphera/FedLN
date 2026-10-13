@@ -1,8 +1,8 @@
+# Nousphera maintenance: dependency-free help and bounded runtime setup.
 import os
 import sys
 os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-import tensorflow as tf
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -16,6 +16,8 @@ parser.add_argument('--dataset_name',			type=str,	default='eurosat',			required=
 parser.add_argument('--model_name',				type=str, 	default='resnet20',			required=False)
 parser.add_argument('--seed',					type=int, 	default=42,					required=False)
 args = parser.parse_args()
+
+import tensorflow as tf
 
 def load_available_datasets(train=True):
 	import data
@@ -50,7 +52,8 @@ def execute_experiment():
 	# Train model
 	h = model.fit(ds_train, epochs=int(args.epochs), verbose=2)
 	# Evaluate model
-	ds_test, _ = load_test_data(batch_size=int(args.batch_size))
+	# Nousphera maintenance: loaders return dataset, class count and sample count.
+	ds_test, _, _ = load_test_data(batch_size=int(args.batch_size))
 	metrics = model.evaluate(ds_test)
 	print(f'Model Performance in test set - Loss: {metrics[0]:0.4f} - Accuracy: {100*metrics[1]:0.2f}')
  

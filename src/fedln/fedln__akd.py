@@ -1,16 +1,14 @@
+# Nousphera maintenance: dependency-free help and bounded runtime setup.
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL']="3"
 os.environ['TF_FORCE_GPU_ALLOW_GROWTH']='true'
 os.environ['CUDA_DEVICE_ORDER']="PCI_BUS_ID"
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-import flwr as fl
-import GPUtil
 from time import sleep
-from pathlib import Path
-import shutil
 import glob
 import argparse
+from utils.runtime import temporary_cache_directory
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_clients',			type=int,	default=3,					required=False)
@@ -28,11 +26,13 @@ parser.add_argument('--embeddings_dir',			type=str,	default='./data/features',	r
 parser.add_argument('--embeddings_dims',		type=int,	default=512,				required=False)
 parser.add_argument('--dataset_name',			type=str,	default='eurosat',			required=False)
 parser.add_argument('--model_name',				type=str, 	default='resnet20',			required=False)
-parser.add_argument('--temp_dir',				type=str, 	default='./tmp',			required=False)
+parser.add_argument('--temp_dir',				type=str, 	default='./tmp',			required=False, help='Parent directory for a private disposable simulation cache')
 parser.add_argument('--seed',					type=int, 	default=42,					required=False)
 args = parser.parse_args()
 
-if Path(args.temp_dir).exists() and Path(args.temp_dir).is_dir(): shutil.rmtree(Path(args.temp_dir))
+import flwr as fl
+from utils.gpu_utils import get_available_gpu as grab_gpu
+
 
 def load_available_datasets(train=True):
 	import data
@@ -47,12 +47,6 @@ def load_available_models():
 		'resnet20': models.load_resnet20_model,
 		'cnn': models.load_cnn_model,
 	}
-
-def grab_gpu(memory_limit=0.91):
-	while len(GPUtil.getAvailable(order='memory', limit=len(GPUtil.getGPUs()), maxLoad=1.0, maxMemory=memory_limit)) == 0: sleep(1)
-	cuda_device_ids = GPUtil.getAvailable(order='memory', limit=len(GPUtil.getGPUs()), maxLoad=1.0, maxMemory=memory_limit)
-	cuda_device_ids.extend("") # Fix no gpu issue
-	return str(cuda_device_ids[0])
 
 def create_client(cid):
 	sleep(int(cid)*0.75)
@@ -140,14 +134,21 @@ def create_server():
             model_loader=load_model, data_loader=load_test_data, **kwargs)
 
 def run_simulation():
-	# Create server
-	server = create_server()
-	# Start simulation
-	history = fl.simulation.start_simulation(client_fn=create_client, server=server, num_clients=int(args.num_clients),
-		ray_init_args= {"ignore_reinit_error": True, "num_cpus": int(args.num_clients),},
-		config=fl.server.ServerConfig(num_rounds=int(args.num_rounds), round_timeout=None),)
-	if Path(args.temp_dir).exists() and Path(temp_dir).is_dir(): shutil.rmtree(Path(args.temp_dir))
-	return history
+	# Only a newly allocated child directory belongs to this simulation.
+	cache_parent = args.temp_dir
+	with temporary_cache_directory(cache_parent) as cache_dir:
+		args.temp_dir = cache_dir
+		try:
+			# Create server
+			server = create_server()
+			# Start simulation
+			history = fl.simulation.start_simulation(client_fn=create_client, server=server, num_clients=int(args.num_clients),
+				ray_init_args= {"ignore_reinit_error": True, "num_cpus": int(args.num_clients),},
+				config=fl.server.ServerConfig(num_rounds=int(args.num_rounds), round_timeout=None),)
+			return history
+		finally:
+			args.temp_dir = cache_parent
+
 
 if __name__ == "__main__":
 	print(run_simulation())
