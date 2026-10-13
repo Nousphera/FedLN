@@ -7,6 +7,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import shlex
 import shutil
 import subprocess
 import sys
@@ -69,9 +70,13 @@ class LauncherTests(unittest.TestCase):
                    "confidence_learning": "baselines/fedavg__cl.py",
                    "bi_tempered_loss": "baselines/fedavg__loss.py",
                    "label_smoothing": "baselines/fedavg__smooth.py"}
-        with tempfile.TemporaryDirectory() as directory:
+        with tempfile.TemporaryDirectory(prefix="fedln dispatch ") as directory:
             python = Path(directory) / "python"
-            python.write_text(f"#!{sys.executable}\nimport json,os,sys\nprint(json.dumps([os.getcwd(),sys.argv[1:]]))\n")
+            fixture = Path(directory) / "capture arguments.py"
+            fixture.write_text("import json,os,sys\nprint(json.dumps([os.getcwd(),sys.argv[1:]]))\n")
+            # A shebang cannot quote an interpreter path containing spaces.
+            python.write_text("#!/bin/sh\nexec " + shlex.quote(sys.executable) + " "
+                              + shlex.quote(str(fixture)) + ' "$@"\n')
             python.chmod(0o755)
             env = dict(os.environ, PATH=directory + os.pathsep + os.environ.get("PATH", ""))
             for method, expected in methods.items():
