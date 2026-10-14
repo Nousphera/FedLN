@@ -9,3 +9,8 @@ src/data/eurosat/
 
 runs/
 *.npz
+
+# Locally prepared datasets, teacher artifacts, and isolated environments
+/data/
+/features/
+.venv-*/

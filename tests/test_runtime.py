@@ -177,7 +177,8 @@ class CentralizedTests(unittest.TestCase):
             return {"cifar10": (lambda **kw: (training_data, 10, 8, None, None)) if train
                     else (lambda **kw: ("test_dataset", 10, 8))}
         run = load_function("baselines/centralized.py", "execute_experiment", {
-            "args": args, "tf": Mock(), "load_available_models": lambda: {"cnn": lambda **kw: model},
+            "args": args, "tf": Mock(), "make_optimizer": Mock(return_value="configured_optimizer"),
+            "load_available_models": lambda: {"cnn": lambda **kw: model},
             "load_available_datasets": datasets})
         with redirect_stdout(io.StringIO()):
             run()

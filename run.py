@@ -65,6 +65,19 @@ def main(argv=None):
             else:
                 path = Path(args.embeddings_dir)
                 args.embeddings_dir = str(path.resolve() if path.is_absolute() else (ROOT / 'src' / path).resolve())
+        from utils.features import source_digest, array_digest
+        artifacts = {}
+        if args.dataset_name != 'synthetic':
+            artifacts['training_source_sha256'] = source_digest(args.dataset_name, args.data_root)
+            if getattr(args, 'human_labels', None):
+                import hashlib
+                artifacts['human_labels_sha256'] = hashlib.sha256(Path(args.human_labels).read_bytes()).hexdigest()
+            if hasattr(args, 'embeddings_dir'):
+                feature_path = Path(args.embeddings_dir) / f'{args.dataset_name}.npy'
+                manifest = feature_path.with_suffix('.manifest.json')
+                artifacts['features_sha256'] = array_digest(np.load(feature_path, allow_pickle=False, mmap_mode='r'))
+                artifacts['feature_manifest'] = json.loads(manifest.read_text()) if manifest.exists() else None
+        report['input_artifacts'] = artifacts
         server = experiment.create_server()
         strategy = server.strategy
         parameters = strategy.initial_parameters

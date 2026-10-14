@@ -12,7 +12,8 @@ class _Server(fl.server.Server):
 		self.model_loader = model_loader
 		self.input_shape = self.data.element_spec[0].shape
 		self.init_model = init_model # (.h5 format)
-		self.clients_config = {"epochs": kwargs['train_epochs'], "lr": kwargs['lr']}
+		self.clients_config = {"epochs": kwargs['train_epochs'], "lr": kwargs['lr'],
+                               "optimizer":kwargs.get("optimizer","adam"), "momentum":kwargs.get("momentum",.9)}
 		self.num_clients = num_clients
 		self.participation = participation
 		self.set_strategy(self)

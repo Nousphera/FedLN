@@ -10,6 +10,8 @@ import argparse
 from utils.runtime import temporary_cache_directory
 
 
+from utils.optimizers import add_paper_arguments, resolve_optimizer, make_optimizer
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_clients',			type=int,	default=3,					required=False)
 parser.add_argument('--num_rounds',				type=int,	default=10,					required=False)
@@ -26,20 +28,18 @@ parser.add_argument('--dataset_name',			type=str,	default='eurosat',			required=
 parser.add_argument('--model_name',				type=str, 	default='resnet20',			required=False)
 parser.add_argument('--temp_dir',				type=str, 	default='./tmp',			required=False, help='Parent directory for a private disposable simulation cache')
 parser.add_argument('--seed',					type=int, 	default=42,					required=False)
-args = parser.parse_args()
+add_paper_arguments(parser)
+args = resolve_optimizer(parser.parse_args())
 
 import flwr as fl
+from utils.features import load_feature_rows, source_digest
 from utils.gpu_utils import get_available_gpu as grab_gpu
 
 
 def load_available_datasets(train=True):
 	import data
-	return {
-		'eurosat': data.load_eurosat if train else data.load_eurosat_test, 
-		'cifar10': data.load_cifar if train else data.load_cifar_test,
-        'synthetic': data.load_synthetic if train else data.load_synthetic_test,
-        'spcm': data.load_spcm if train else data.load_spcm_test,
-	}
+	return data.registry(train,args)
+
 
 def load_available_models():
 	import models
@@ -63,6 +63,7 @@ def create_client(cid):
 	import numpy as np
 
 	# Load corrected labels (if have been computed)
+	feature_data_root = args.data_root
 	labels = np.load(open(f'{args.temp_dir}/relabel_{cid}.npy','rb')) if os.path.isfile(f'{args.temp_dir}/relabel_{cid}.npy') else None
 
 	class NNCClient(Client):
@@ -85,7 +86,8 @@ def create_client(cid):
                         shuffle=False, noisy_clients_frac=kwargs['noisy_clients_frac'],
 						noise_lvl=kwargs['noise_lvl'], noise_sparsity=kwargs['noise_sparsity'],
 						batch_size=kwargs['batch_size'], seed=kwargs['seed'], corrected_labels=None)
-				with open(f'{feat_dir}/{dataset}.npy','rb') as f: features = np.load(f)[np.asarray(self.idxs).reshape(-1)]
+				features = load_feature_rows(feat_dir,dataset,self.idxs,
+                    source_digest(dataset,feature_data_root) if dataset!='synthetic' else None)
 				labels = relabel_with_pretrained_knn(labels=self.labels, features=features, num_classes=self.num_classes,
 													num_neighbors=num_neighbors, verbose=True)
 				kwargs['shuffle']=True
@@ -115,7 +117,8 @@ def create_server():
 	from utils.flwr_server import _Server as Server
 	load_model = load_available_models()[args.model_name]
 	load_test_data = load_available_datasets(train=False)[args.dataset_name]
-	kwargs = {'lr':float(args.lr), 'train_epochs':int(args.train_epochs)}
+	kwargs = {'lr':float(args.lr), 'train_epochs':int(args.train_epochs),
+              'optimizer':args.optimizer,'momentum':args.momentum}
 	return Server(num_rounds=int(args.num_rounds), num_clients=int(args.num_clients),
 			participation=float(args.participation_rate), model_loader=load_model,
 			data_loader=load_test_data, **kwargs)

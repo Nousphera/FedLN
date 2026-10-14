@@ -10,6 +10,8 @@ import glob
 import argparse
 from utils.runtime import temporary_cache_directory
 
+from utils.optimizers import add_paper_arguments, resolve_optimizer, make_optimizer
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_clients',			type=int,	default=3,					required=False)
 parser.add_argument('--num_rounds',				type=int,	default=10,					required=False)
@@ -28,20 +30,24 @@ parser.add_argument('--dataset_name',			type=str,	default='eurosat',			required=
 parser.add_argument('--model_name',				type=str, 	default='resnet20',			required=False)
 parser.add_argument('--temp_dir',				type=str, 	default='./tmp',			required=False, help='Parent directory for a private disposable simulation cache')
 parser.add_argument('--seed',					type=int, 	default=42,					required=False)
-args = parser.parse_args()
+parser.add_argument('--akd_teacher', choices=['embeddings', 'global_logits'], default='embeddings')
+parser.add_argument('--kd_beta', type=float, default=10.0)
+parser.add_argument('--temperature', type=float, default=2.0)
+parser.add_argument('--noise_threshold', type=float, default=0.15)
+add_paper_arguments(parser)
+args = resolve_optimizer(parser.parse_args())
+if args.kd_beta < 0 or args.temperature <= 0 or not 0 <= args.noise_threshold <= 1:
+	parser.error('Invalid beta, temperature, or noise threshold')
 
 import flwr as fl
+from utils.features import load_feature_rows, source_digest
 from utils.gpu_utils import get_available_gpu as grab_gpu
 
 
 def load_available_datasets(train=True):
 	import data
-	return {
-		'eurosat': data.load_eurosat if train else data.load_eurosat_test, 
-		'cifar10': data.load_cifar if train else data.load_cifar_test,
-        'synthetic': data.load_synthetic if train else data.load_synthetic_test,
-        'spcm': data.load_spcm if train else data.load_spcm_test,
-    }
+	return data.registry(train,args)
+
 
 def load_available_models():
 	import models
@@ -57,7 +63,7 @@ def create_client(cid):
 	sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 	from utils.flwr_client import _Client as Client
 	from utils.knn_relabel import estimate_noise_with_pretrained_knn
-	from utils.distiller import Distiller
+	from utils.distiller import Distiller, GlobalLogitDistiller
 	import numpy as np
 	import tensorflow as tf
 
@@ -84,12 +90,13 @@ def create_client(cid):
 			return os.path.isfile(self.noise_path) and float(np.load(self.noise_path)[0]) > 0
 
 		def set_parameters(self, parameters, config):
-			if not hasattr(self, 'student') or self._with_embeddings != self.noisy:
-				self._with_embeddings = self.noisy
+			with_embeddings = self.noisy and args.akd_teacher == 'embeddings'
+			if not hasattr(self, 'student') or self._with_embeddings != with_embeddings:
+				self._with_embeddings = with_embeddings
 				self.student = self.model_loader(input_shape=self.input_shape[1:], num_classes=self.num_classes,
-					embeddings_dim=int(args.embeddings_dims) if self.noisy else None)
-				self.classifier = tf.keras.Model(self.student.inputs, self.student.outputs[0]) if self.noisy else self.student
-				if self.noisy:
+					embeddings_dim=int(args.embeddings_dims) if with_embeddings else None)
+				self.classifier = tf.keras.Model(self.student.inputs, self.student.outputs[0]) if with_embeddings else self.student
+				if with_embeddings:
 					self.projection = self.student.outputs[1]._keras_history.layer
 					if os.path.isfile(self.projection_path):
 						with np.load(self.projection_path) as saved:
@@ -105,28 +112,33 @@ def create_client(cid):
 			idxs = np.asarray(idxs).reshape(-1)
 			features = None
 			if int(config['round']) >= self.distil_round and not os.path.isfile(self.noise_path):
-				features = np.load(f'{args.embeddings_dir}/{self.dataset}.npy')[idxs]
+				features = load_feature_rows(args.embeddings_dir,self.dataset,idxs, source_digest(self.dataset,args.data_root) if self.dataset!='synthetic' else None)
 				estimated_noise = estimate_noise_with_pretrained_knn(labels, features, self.num_classes,
-					num_neighbors=self.num_neighbors)
+					num_neighbors=self.num_neighbors, noise_theshold=args.noise_threshold)
 				os.makedirs(self.temp_dir, exist_ok=True)
 				np.save(self.noise_path, [estimated_noise])
 			self.set_parameters(parameters, config)
 			self.model = self.student
 			self.data = _data
-			if self.noisy:
-				if features is None: features = np.load(f'{args.embeddings_dir}/{self.dataset}.npy')[idxs]
+			if self._with_embeddings:
+				if features is None: features = load_feature_rows(args.embeddings_dir,self.dataset,idxs, source_digest(self.dataset,args.data_root) if self.dataset!='synthetic' else None)
 				if features.shape[1] != int(args.embeddings_dims):
 					raise ValueError('Embedding width does not match --embeddings_dims')
 				self.model = Distiller(self.student, features, idxs)
 				self.data = tf.data.Dataset.zip((_data.unbatch(), tf.data.Dataset.from_tensor_slices(idxs)))
 				self.data = self.data.batch(self.loader_kwargs['batch_size']).prefetch(tf.data.AUTOTUNE)
-			self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=config['lr']),
+			elif self.noisy:
+				teacher = tf.keras.models.clone_model(self.classifier)
+				teacher.set_weights(self.classifier.get_weights())
+				self.model = GlobalLogitDistiller(self.student, teacher, args.kd_beta, args.temperature)
+			compile_options = {'alpha':args.kd_beta} if self._with_embeddings else {}
+			self.model.compile(optimizer=make_optimizer(config),
 				loss=tf.keras.losses.CategoricalCrossentropy(name='loss', from_logits=True),
-				metrics=[tf.keras.metrics.CategoricalAccuracy(name='accuracy')])
+				metrics=[tf.keras.metrics.CategoricalAccuracy(name='accuracy')], **compile_options)
 			h = self.model.fit(self.data, epochs=config['epochs'], verbose=0)
-			if self.noisy: np.savez(self.projection_path, *self.projection.get_weights())
+			if self._with_embeddings: np.savez(self.projection_path, *self.projection.get_weights())
 			metrics = {'accuracy':float(h.history['accuracy'][-1]), 'loss':float(h.history['loss'][-1]),
-				'distillation_active': bool(self.noisy), 'cid': self.cid}
+				'distillation_active': bool(self.noisy), 'teacher':args.akd_teacher, 'kd_beta':args.kd_beta, 'temperature':args.temperature, 'cid': self.cid}
 			return self.get_parameters(), self.num_samples, metrics
 
 	#############################################
@@ -144,7 +156,8 @@ def create_server():
 	from utils.flwr_server import _Server as Server
 	load_model = load_available_models()[args.model_name]
 	load_test_data = load_available_datasets(train=False)[args.dataset_name]
-	kwargs = {'lr':float(args.lr), 'train_epochs':int(args.train_epochs)}
+	kwargs = {'lr':float(args.lr), 'train_epochs':int(args.train_epochs),
+              'optimizer':args.optimizer,'momentum':args.momentum}
 	return Server(num_rounds=int(args.num_rounds), num_clients=int(args.num_clients), participation=float(args.participation_rate),
             model_loader=load_model, data_loader=load_test_data, **kwargs)
 

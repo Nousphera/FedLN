@@ -40,16 +40,17 @@ and needs a working NVIDIA setup; GPU and multi-host runs are not validated.
 The final TIST article describes three **alternative** methods: NNC corrects
 labels before local training; AKD applies MAE feature supervision to clients
 whose estimated noise exceeds 0.15; NA-FedAvg estimates energy scores once and
-then changes aggregation weights. This repository supplies CIFAR-10, EuroSAT and a recovered prepared-record
-SpeechCommands path; see [RECOVERED_DATA.md](RECOVERED_DATA.md). It does not yet
-supply the final paper's human-noise, FashionMNIST or PathMNIST pipelines.
+then changes aggregation weights. The maintained dataset/teacher paths now also
+cover FashionMNIST, PathMNIST, CIFAR-N human noise, and Speech Commands. See
+[PAPER_DATA.md](PAPER_DATA.md) for preparation, source identity checks, and
+explicit historical uncertainties.
 
 A configuration matching the main paper's exposed CIFAR-10 settings is:
 
 ```bash
 python run.py --method nnc --dataset_name cifar10 --model_name resnet20 \
   --num_clients 30 --num_rounds 200 --participation_rate .8 \
-  --train_epochs 1 --batch_size 128 --lr .001 --knn_neighbors 100 \
+  --train_epochs 1 --batch_size 128 --optimizer sgd --lr .1 --momentum .9 --knn_neighbors 100 \
   --noisy_frac .8 --noise_level .4 --noise_sparsity .7 --seed 42 \
   --output runs/cifar10-nnc-seed42
 ```
@@ -59,15 +60,17 @@ Change `nnc` to `akd` for feature distillation. NA-FedAvg uses
 `--knn_neighbors`. The paper studies multiple noise levels/sparsities and
 three trials; one command does not reproduce its tables. The supplied random
 sharding also differs from the paper's explicitly controlled 25% quantity
-variance. These commands exercise the released subset, not all paper settings.
+variance. These commands exercise the maintained implementation, not all paper settings.
 
 CIFAR-10 downloads through Keras. Its included embedding array has 50,000 rows
-and 512 float16 columns; indices refer to the Keras training order. EuroSAT
+and 512 float16 columns; the original loader indexes it by Keras training row.
+Its extraction/alignment manifest was not recovered and remains unverified. EuroSAT
 requires `eurosat/eurosat.npz` below `TFDS_DATA_DIR` (or `src/data`), with
 `images` and `labels`. The original first 21,600 rows train and the remaining
 5,400 test. Its embeddings have 27,000 rows. The original EuroSAT archive/order
-and embedding extraction scripts are unavailable: a newly shuffled dataset
-cannot be assumed to align. No embedding files were changed by maintenance.
+and original embedding extraction scripts are unavailable: a newly shuffled dataset
+cannot be assumed to align. New extraction commands record verifiable manifests;
+no bundled embedding files were changed by maintenance.
 Record dataset/embedding hashes, seeds and hardware before a scientific run.
 
 ## Correctness repairs and remaining source conventions
@@ -103,6 +106,9 @@ by zero. If a later participating subset has zero total impact, its update is
 skipped explicitly and the previous global model is retained. This limitation must be resolved with the original experiment records
 before quantitative reproduction claims.
 
-AKD includes embedding supervision with MAE and coefficient 10; its stored
-historical temperature does not enter the MAE objective. Logit-teacher AKD,
-embedding extraction and full paper datasets are outside the supplied source.
+AKD retains embedding supervision with MAE and coefficient 10; temperature does
+not enter MAE. The maintained `--akd_teacher global_logits` path freezes the
+incoming round-global classifier and applies Eq. 9's student-to-global KL with
+T=2 and T² scaling. Both paths still use teacher features for local noise
+estimation. See [PAPER_DATA.md](PAPER_DATA.md) for the objective, optimizer
+correction, and authentic CLIP/TRILLsson extraction commands.

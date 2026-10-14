@@ -5,6 +5,8 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 import argparse
 
+from utils.optimizers import add_paper_arguments, resolve_optimizer, make_optimizer
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--epochs',					type=int,	default=10,					required=False)
 parser.add_argument('--batch_size',				type=int,	default=128,				required=False)
@@ -15,16 +17,15 @@ parser.add_argument('--noise_sparsity',			type=float,	default=0.7,				required=F
 parser.add_argument('--dataset_name',			type=str,	default='eurosat',			required=False)
 parser.add_argument('--model_name',				type=str, 	default='resnet20',			required=False)
 parser.add_argument('--seed',					type=int, 	default=42,					required=False)
-args = parser.parse_args()
+add_paper_arguments(parser)
+args = resolve_optimizer(parser.parse_args())
 
 import tensorflow as tf
 
 def load_available_datasets(train=True):
 	import data
-	return {
-		'eurosat': data.load_eurosat if train else data.load_eurosat_test, 
-		'cifar10': data.load_cifar if train else data.load_cifar_test,
-	}
+	return data.registry(train,args)
+
 
 def load_available_models():
 	import models
@@ -46,7 +47,7 @@ def execute_experiment():
 	# Create model
 	input_shape = ds_train.element_spec[0].shape[1:]
 	model = load_model(input_shape=input_shape , num_classes=num_classes)
-	model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=float(args.lr)),
+	model.compile(optimizer=make_optimizer(vars(args)),
 		loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True, name='loss'),
 		metrics=[tf.keras.metrics.CategoricalAccuracy(name='accuracy')])
 	# Train model

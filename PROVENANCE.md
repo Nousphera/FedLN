@@ -23,3 +23,12 @@ added. Synthetic features are generated fixtures, not recovered CLIP artifacts.
 Recovered SpeechCommands loader: author HomeLab archive `FedLN/data/spcm.py`,
 SHA-256 `73bfa53c0bba349a9596c4bf0695bf75cbea12c833abb83eccab8a9b8a3b6804`. Restored and repaired interface is
 documented in `docs/RECOVERED_DATA.md`; no dataset or model weights copied.
+
+## Dataset and teacher completion
+
+`prepare_features.py`, `extract_features.py`, `prepare_audio.py`, and
+`prepare_human_labels.py` are maintained implementations, not recovered historical
+extractors. They use public model/dataset APIs and record hashes rather than
+redistributing weights or datasets. Public source revisions and explicit data
+recipes are documented in `docs/PAPER_DATA.md`. The global-logit AKD option is
+a maintained implementation of the final paper's printed Eq. 9.

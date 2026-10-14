@@ -1,3 +1,4 @@
+from utils.optimizers import make_optimizer
 import flwr as fl
 import tensorflow as tf
 
@@ -20,7 +21,7 @@ class _Client(fl.client.NumPyClient):
 			self.model = self.model_loader(input_shape=self.input_shape[1:], num_classes=self.num_classes)
 
 		self.model.compile(
-			optimizer=tf.keras.optimizers.Adam(learning_rate=config['lr']),
+			optimizer=make_optimizer(config),
 			loss=tf.keras.losses.CategoricalCrossentropy(name='loss', from_logits=True),
 			metrics=[tf.keras.metrics.CategoricalAccuracy(name='accuracy')]
 		)

@@ -1,6 +1,6 @@
 # FedLN: Federated Learning with Noisy Labels
 
-FedLN estimates label noise on federated clients and uses those estimates during initialization, local training, or server aggregation. This repository contains the TensorFlow/Flower research implementation, with CIFAR-10 and EuroSAT loaders and CNN/ResNet20 models.
+FedLN estimates label noise on federated clients and uses those estimates during initialization, local training, or server aggregation. This repository contains the TensorFlow/Flower research implementation, with vision/audio loaders, pretrained teacher extraction, and CNN/ResNet20 models.
 
 This independent Nousphera copy preserves the history and attribution of [FederatedML/FedLN](https://github.com/FederatedML/FedLN); see [provenance](PROVENANCE.md). Maintenance repairs seed propagation, label correction, preprocessing and transport errors while retaining the original history and archival dependency pins. These repairs can change numerical results.
 
@@ -14,7 +14,7 @@ Vasileios Tsouvalas, Aaqib Saeed, Tanir Özçelebi, Nirvana Meratnia
 
 [Journal article](https://doi.org/10.1145/3626242) · [Preprint](https://arxiv.org/abs/2208.09378) · [Original project page](https://federatedml.github.io/FedLN/) · [2022 workshop version](https://openreview.net/forum?id=gNHMC4I0Pva)
 
-The journal evaluates a wider set of vision/audio datasets than the loaders shipped here. Paper results have not been reproduced during this maintenance work.
+The maintained paths cover the paper’s main vision/audio datasets and human-noise inputs. Historical preprocessing/partition details remain qualified; published accuracy tables have not been reproduced.
 
 ## Quick start
 
@@ -34,7 +34,7 @@ python run.py --method nnc --dataset_name synthetic --num_clients 2 \
 python -m pytest -q
 ```
 
-Select `--method akd`, `na_fedavg` or `fedavg` for the other primary paths.
+Select `--method akd`, `na_fedavg` or `fedavg` for the other primary paths. AKD supports embedding MAE (default) or `--akd_teacher global_logits` with the paper’s student-to-global KL. Dataset defaults select SGD 0.1/momentum 0.9 for CIFAR/Fashion and Adam 0.001 for the remaining datasets; explicit options override them.
 For the short NA-FedAvg check add `--est_noise_round 1`. Use
 `--method-help` for all method arguments. The synthetic fixture tests execution;
 it is not a pretrained embedding or a paper result.
@@ -57,13 +57,15 @@ and its historical dependency list remains at `src/requirements.txt`.
 | `confidence_learning` | FedAvg with confident learning | Local cross-validation |
 | `centralized` | Centralized training | Uses `--epochs`, not `--num_rounds` |
 
-Use `python run.py --method METHOD --method-help` for its arguments; centralized training remains an archival entry point. The registered dataset names are `cifar10` and `eurosat`; model names are `cnn` and `resnet20`.
+Use `python run.py --method METHOD --method-help` for its arguments; centralized training remains an archival entry point. Dataset names are `cifar10`, `cifar100`, `cifar10n`, `cifar100n`, `fashionmnist`, `pathmnist`, `eurosat`, `spcm`, and the generated `synthetic` fixture. Model names are `cnn` and `resnet20`.
 
 ## Data and files
 
+[Dataset and teacher preparation](docs/PAPER_DATA.md) gives complete commands for CLIP ViT-B/32, TRILLsson 3, TFDS Speech Commands conversion, PathMNIST, FashionMNIST, and explicit CIFAR-N human annotations. Extractors write stable row IDs and source/feature hashes; NNC/AKD verify alignment before training. Separate teacher environments avoid TensorFlow/PyTorch dependency conflicts.
+
 - **CIFAR-10:** images download through the Keras dataset loader. Included `src/data/features/cifar10.npy` has 50,000 rows and 512 float16 features.
 - **EuroSAT:** supply `src/data/eurosat/eurosat.npz`, or set `TFDS_DATA_DIR` to a directory containing `eurosat/eurosat.npz`. The archive must contain `images` and `labels` in the original order. Included embeddings have 27,000 rows and 512 float16 features; the loader uses the first 21,600 examples for training. The archive and an independently verified preparation recipe are not included.
-- **Embeddings:** NNC/AKD use `--embeddings_dir` (default `./data/features`). Extraction provenance and row alignment must be checked before substituting new data/features.
+- **Embeddings:** NNC/AKD use `--embeddings_dir` (default `./data/features`). Newly extracted features carry verified identity manifests. The bundled historical arrays emit an unverified-alignment warning.
 - **Temporary state:** each cached method creates a private `fedln-*` child of `--temp_dir`. Normal completion and Python exceptions clean up that child; existing files in the parent are preserved. These caches are not checkpoints.
 
 `src/fedln/` contains the three methods; `src/baselines/` contains comparisons; `src/data/`, `src/models/`, and `src/utils/` hold the shared implementation. `index.html` and `img/` contain the project page and original research figures.
@@ -103,4 +105,4 @@ The source retains its original [Apache License 2.0](LICENSE). Cite the authors 
 
 [Project page](https://nousphera.github.io/FedLN/) · [Research overview](https://nousphera.github.io/projects/fedln/) · [A0 poster](https://nousphera.github.io/FedLN/poster.pdf) · [Paper](https://doi.org/10.1145/3626242)
 
-This repository contains the research implementation. The project page and poster summarize the published method and reported experiments; this documentation update does not claim an independent reproduction of those experiments.
+This repository contains the research implementation. The project page and poster summarize the published method and reported experiments; this maintained release does not claim an independent reproduction of those experiments.

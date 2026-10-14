@@ -25,8 +25,11 @@ compressed with ZLIB. Each serialized `tf.train.Example` has:
 
 Each record file has an adjacent `.npz` sidecar containing `file_id` and
 `label` arrays in exactly its record order. IDs must be unique within a split.
+The loader verifies these IDs and labels against actual records in their exact order.
 There must be at least as many train record shards as clients. Neither corpus
-record conversion nor the historical embedding extractor was recovered.
+record conversion nor the historical embedding extractor was recovered; maintained
+`prepare_audio.py` and `extract_features.py` now provide these steps with explicit
+TFDS/teacher versions and recorded hashes. See [PAPER_DATA.md](PAPER_DATA.md).
 The generated examples in `tests/test_audio_data.py::write_records` demonstrate
 the exact schema without requiring any dataset download.
 
@@ -49,8 +52,11 @@ checks that the achieved fraction is close to the requested fraction.
 Training preserves the original 15,690-sample random window, L2 waveform
 normalization, 64 mel bins, and log-magnitude spectrogram. Evaluation retains
 full padded waveforms and batches one example, allowing variable duration.
-No unknown/silence-class generation recipe, exact historical splits, teacher
-weights or paper results were recovered by this source restoration.
+The exact historical unknown/silence recipe, splits and teacher preprocessing
+were not recovered. The maintained exporter explicitly uses TFDS 4.9.4
+Speech Commands 0.0.3 and its twelve-label recipe; the extractor obtains the
+official TRILLsson 3 SavedModel. These executable paths are not benchmark
+reproductions.
 
 ## Checks
 

@@ -1,0 +1,4 @@
+# Optional in the Python 3.11 training environment; official TFDS 12-class recipe.
+tensorflow-datasets==4.9.4
+tensorflow-metadata==1.15.0
+pydub==0.25.1

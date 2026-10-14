@@ -10,6 +10,8 @@ import glob
 import argparse
 from utils.runtime import temporary_cache_directory
 
+from utils.optimizers import add_paper_arguments, resolve_optimizer, make_optimizer
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_clients',			type=int,	default=3,					required=False)
 parser.add_argument('--num_rounds',				type=int,	default=10,					required=False)
@@ -26,7 +28,8 @@ parser.add_argument('--dataset_name',			type=str,	default='eurosat',			required=
 parser.add_argument('--model_name',				type=str, 	default='resnet20',			required=False)
 parser.add_argument('--temp_dir',				type=str, 	default='./tmp',			required=False, help='Parent directory for a private disposable simulation cache')
 parser.add_argument('--seed',					type=int, 	default=42,					required=False)
-args = parser.parse_args()
+add_paper_arguments(parser)
+args = resolve_optimizer(parser.parse_args())
 
 import flwr as fl
 from utils.gpu_utils import get_available_gpu as grab_gpu
@@ -34,12 +37,8 @@ from utils.gpu_utils import get_available_gpu as grab_gpu
 
 def load_available_datasets(train=True):
 	import data
-	return {
-		'eurosat': data.load_eurosat if train else data.load_eurosat_test, 
-		'cifar10': data.load_cifar if train else data.load_cifar_test,
-        'synthetic': data.load_synthetic if train else data.load_synthetic_test,
-        'spcm': data.load_spcm if train else data.load_spcm_test,
-	}
+	return data.registry(train,args)
+
 
 def load_available_models():
 	import models
@@ -140,7 +139,8 @@ def create_server():
 
 	load_model = load_available_models()[args.model_name]
 	load_test_data = load_available_datasets(train=False)[args.dataset_name]
-	kwargs = {'lr':float(args.lr), 'train_epochs':int(args.train_epochs)}
+	kwargs = {'lr':float(args.lr), 'train_epochs':int(args.train_epochs),
+              'optimizer':args.optimizer,'momentum':args.momentum}
 	return NAServer(compute_round=int(args.est_noise_round), percentile=int(args.percentile), num_rounds=int(args.num_rounds),
             num_clients=int(args.num_clients), participation=float(args.participation_rate), model_loader=load_model, 
             data_loader=load_test_data, **kwargs)

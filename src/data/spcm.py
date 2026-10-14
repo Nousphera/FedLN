@@ -31,6 +31,13 @@ def load_raw_data(split, shards='all'):
         with np.load(str(path)+'.npz',allow_pickle=False) as sidecar:
             ids.append(np.asarray(sidecar['file_id'],dtype=np.int64).reshape(-1))
             labels.append(np.asarray(sidecar['label'],dtype=np.int64).reshape(-1))
+        actual_ids=[];actual_labels=[]
+        for record in tf.data.TFRecordDataset(str(path),compression_type='ZLIB'):
+            _,label,identity=read_tf_record(record)
+            actual_ids.append(int(identity.numpy()));actual_labels.append(int(label.numpy()))
+        if not np.array_equal(actual_ids,ids[-1]) or not np.array_equal(actual_labels,labels[-1]):
+            raise ValueError(f'TFRecord/sidecar IDs and labels differ in record order: {path.name}')
+
     if not ids: raise ValueError('Each client needs at least one prepared TFRecord shard')
     ids=np.concatenate(ids);labels=np.concatenate(labels)
     if len(ids)!=len(labels) or len(np.unique(ids))!=len(ids) or np.any(ids<0):
