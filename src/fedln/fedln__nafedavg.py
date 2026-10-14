@@ -121,7 +121,7 @@ def create_server():
 				percentile=self.percentile,
 				min_available_clients=self.num_clients,
 				fraction_fit=self.participation,
-				min_fit_clients=int(self.participation*self.num_clients),
+				min_fit_clients=max(1, int(self.participation*self.num_clients)),
 				fraction_evaluate=0.0,
 				min_evaluate_clients=0,
 				evaluate_fn=self.get_evaluation_fn(),

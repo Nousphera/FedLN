@@ -22,3 +22,11 @@ The full paper datasets, CLIP/TRILLsson extraction, distributed Ray/GPU training
 and published accuracy tables were not reproduced. Synthetic-run accuracy is
 not a performance estimate. The configured Linux CI has not been observed
 remotely as part of this local work.
+
+## Small participation regression
+
+A focused regression now constructs the actual server/strategy and checks that
+`participation=0.01` with two available clients schedules one fit instruction.
+Before the minimum-client floor, it scheduled zero. FedLN covers both its base
+server and NA-FedAvg override; FedCompress covers its compressed strategy.
+These focused checks passed after the repair.
