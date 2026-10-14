@@ -32,3 +32,17 @@ extractors. They use public model/dataset APIs and record hashes rather than
 redistributing weights or datasets. Public source revisions and explicit data
 recipes are documented in `docs/PAPER_DATA.md`. The global-logit AKD option is
 a maintained implementation of the final paper's printed Eq. 9.
+
+
+## Reproducible setup follow-up
+
+Added dataset import/download/validation commands and deterministic file manifests.
+Prepared NPZ files feed the maintained trainer directly. Image labels and shapes
+are validated against fixed dataset class spaces; explicit dataset imports do not
+certify historical order, partitions or benchmark equivalence. Existing source,
+teacher identity and cache qualifications are retained in the linked guides.
+
+Added real Flower ClientApp/ServerApp entry points reusing the maintained core.
+Logical partition IDs determine sampling and persistent local state; evaluated
+global weights and round results are saved. Flower 1.13/Ray 2.10 remain pinned for
+compatibility. See docs/FLOWER_APP.md for single-host simulation limits.

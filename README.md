@@ -1,108 +1,95 @@
-# FedLN: Federated Learning with Noisy Labels
-
-FedLN estimates label noise on federated clients and uses those estimates during initialization, local training, or server aggregation. This repository contains the TensorFlow/Flower research implementation, with vision/audio loaders, pretrained teacher extraction, and CNN/ResNet20 models.
-
-This independent Nousphera copy preserves the history and attribution of [FederatedML/FedLN](https://github.com/FederatedML/FedLN); see [provenance](PROVENANCE.md). Maintenance repairs seed propagation, label correction, preprocessing and transport errors while retaining the original history and archival dependency pins. These repairs can change numerical results.
-
-## Paper
+# FedLN
 
 **Labeling Chaos to Learning Harmony: Federated Learning with Noisy Labels**
+[Paper](https://doi.org/10.1145/3626242) · [Project page](https://nousphera.github.io/FedLN/) · [Code](https://github.com/Nousphera/FedLN) · [Source provenance](PROVENANCE.md)
 
-Vasileios Tsouvalas, Aaqib Saeed, Tanir Özçelebi, Nirvana Meratnia
+## Abstract
 
-*ACM Transactions on Intelligent Systems and Technology*, 15(2), Article 22, 2024.
+Federated Learning (FL) is a distributed machine learning paradigm that enables learning models from decentralized private datasets where the labeling effort is entrusted to the clients. While most existing FL approaches assume high-quality labels are readily available on users’ devices, in reality, label noise can naturally occur in FL and is closely related to clients’ characteristics. Due to scarcity of available data and significant label noise variations among clients in FL, existing state-of-the-art centralized approaches exhibit unsatisfactory performance, whereas prior FL studies rely on excessive on-device computational schemes or additional clean data available on the server. We propose FedLN, a framework to deal with label noise across different FL training stages, namely FL initialization, on-device model training, and server model aggregation, able to accommodate the diverse computational capabilities of devices in an FL system. Specifically, FedLN computes per-client noise level estimation in a single federated round and improves the models’ performance by either correcting or mitigating the effect of noisy samples. Our evaluation on various publicly available vision and audio datasets demonstrates a 22% improvement on average compared to other existing methods for a label noise level of 60%. We further validate the efficiency of FedLN in human-annotated real-world noisy datasets and report a 4.8% increase on average in models’ recognition performance, highlighting that FedLN can be useful for improving FL services provided to everyday users.
 
-[Journal article](https://doi.org/10.1145/3626242) · [Preprint](https://arxiv.org/abs/2208.09378) · [Original project page](https://federatedml.github.io/FedLN/) · [2022 workshop version](https://openreview.net/forum?id=gNHMC4I0Pva)
+*The abstract describes the published work. The maintained release has not reproduced its benchmark tables.*
 
-The maintained paths cover the paper’s main vision/audio datasets and human-noise inputs. Historical preprocessing/partition details remain qualified; published accuracy tables have not been reproduced.
+## Setup
 
-## Quick start
-
-Python 3.11, TensorFlow 2.15.1 and stock Flower 1.13.1 are used by the maintained
-CPU runner. Original clients train sequentially with standard Flower message
-serialization, without a Ray cluster or patched framework.
+Use Python 3.11. The commands below create a dedicated virtual environment.
+Flower 1.13.1 and Ray 2.10.0 are pinned; TensorFlow projects require the
+compatible protobuf dependency range. Keep the checkout and virtual environment
+on paths without spaces for Ray subprocesses. Do not upgrade Flower independently.
 
 ```bash
+mkdir -p "$HOME/research-code" "$HOME/.venvs"
+cd "$HOME/research-code"
 git clone https://github.com/Nousphera/FedLN.git
 cd FedLN
-python3.11 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-python run.py --method nnc --dataset_name synthetic --num_clients 2 \
-  --num_rounds 2 --train_epochs 1 --batch_size 8 --knn_neighbors 5 \
-  --output runs/nnc-smoke
+python3.11 -m venv "$HOME/.venvs/fedln"
+source "$HOME/.venvs/fedln/bin/activate"
+python -m pip install -r requirements.txt -r requirements-simulation.txt
 python -m pytest -q
 ```
 
-Select `--method akd`, `na_fedavg` or `fedavg` for the other primary paths. AKD supports embedding MAE (default) or `--akd_teacher global_logits` with the paper’s student-to-global KL. Dataset defaults select SGD 0.1/momentum 0.9 for CIFAR/Fashion and Adam 0.001 for the remaining datasets; explicit options override them.
-For the short NA-FedAvg check add `--est_noise_round 1`. Use
-`--method-help` for all method arguments. The synthetic fixture tests execution;
-it is not a pretrained embedding or a paper result.
+## Datasets
 
-[Reproduction notes](docs/REPRODUCIBILITY.md) provide real-data commands,
-data alignment requirements, numerical fixes, and the unresolved NA-FedAvg
-paper/source convention. The original Ray launcher remains at `src/run.sh`,
-and its historical dependency list remains at `src/requirements.txt`.
+```bash
+python scripts/prepare_data.py --dataset cifar10 --root data --download
+python scripts/prepare_data.py --dataset cifar10 --root data --validate
+```
 
-## Methods
+The same entry point covers CIFAR-100, FashionMNIST, PathMNIST, CIFAR-N,
+EuroSAT and Speech Commands imports/validation. [Dataset setup](docs/DATA_SETUP.md)
+lists every source and command. NNC/AKD additionally require aligned teacher
+features: follow [CLIP/TRILLsson extraction](docs/PAPER_DATA.md), including the
+separate teacher environment and explicit CIFAR-N annotation choice.
 
-| Command | Approach | Extra input |
-| --- | --- | --- |
-| `nnc` | Nearest Neighbor Correction | Aligned pretrained embeddings |
-| `akd` | Adaptive Knowledge Distillation | Aligned pretrained embeddings |
-| `na_fedavg` | Noise-Aware Federated Averaging | No pretrained embeddings |
-| `fedavg` | Federated Averaging | — |
-| `bi_tempered_loss` | FedAvg with bi-tempered logistic loss | — |
-| `label_smoothing` | FedAvg with label smoothing | — |
-| `confidence_learning` | FedAvg with confident learning | Local cross-validation |
-| `centralized` | Centralized training | Uses `--epochs`, not `--num_rounds` |
+## Run
 
-Use `python run.py --method METHOD --method-help` for its arguments; centralized training remains an archival entry point. Dataset names are `cifar10`, `cifar100`, `cifar10n`, `cifar100n`, `fashionmnist`, `pathmnist`, `eurosat`, `spcm`, and the generated `synthetic` fixture. Model names are `cnn` and `resnet20`.
+```bash
+flwr run .
+```
 
-## Data and files
+The default runs two rounds of NNC on a generated fixture with two clients.
+This is an actual `ClientApp`/`ServerApp` simulation: it trains the original
+clients, applies the original server strategy and writes `runs/flower-smoke`.
+For prepared CIFAR-10 and newly extracted features:
 
-[Dataset and teacher preparation](docs/PAPER_DATA.md) gives complete commands for CLIP ViT-B/32, TRILLsson 3, TFDS Speech Commands conversion, PathMNIST, FashionMNIST, and explicit CIFAR-N human annotations. Extractors write stable row IDs and source/feature hashes; NNC/AKD verify alignment before training. Separate teacher environments avoid TensorFlow/PyTorch dependency conflicts.
+```bash
+flwr run . paper --run-config "options='--method nnc --dataset_name cifar10 --data_root data --embeddings_dir $PWD/features --num_clients 30 --num_rounds 200 --participation_rate .8 --train_epochs 1 --batch_size 128 --knn_neighbors 100 --output runs/cifar10-nnc'"
+```
 
-- **CIFAR-10:** images download through the Keras dataset loader. Included `src/data/features/cifar10.npy` has 50,000 rows and 512 float16 features.
-- **EuroSAT:** supply `src/data/eurosat/eurosat.npz`, or set `TFDS_DATA_DIR` to a directory containing `eurosat/eurosat.npz`. The archive must contain `images` and `labels` in the original order. Included embeddings have 27,000 rows and 512 float16 features; the loader uses the first 21,600 examples for training. The archive and an independently verified preparation recipe are not included.
-- **Embeddings:** NNC/AKD use `--embeddings_dir` (default `./data/features`). Newly extracted features carry verified identity manifests. The bundled historical arrays emit an unverified-alignment warning.
-- **Temporary state:** each cached method creates a private `fedln-*` child of `--temp_dir`. Normal completion and Python exceptions clean up that child; existing files in the parent are preserved. These caches are not checkpoints.
+The same argument string accepts `--method akd`, `na_fedavg`, `fedavg`,
+`bi_tempered_loss`, `label_smoothing` or `confidence_learning`.
+See `python run.py --method METHOD --method-help`. For a sequential CPU check:
 
-`src/fedln/` contains the three methods; `src/baselines/` contains comparisons; `src/data/`, `src/models/`, and `src/utils/` hold the shared implementation. `index.html` and `img/` contain the project page and original research figures.
+```bash
+python run.py --method nnc --dataset_name synthetic --num_clients 2 \
+  --num_rounds 2 --train_epochs 1 --batch_size 8 --knn_neighbors 5 --output runs/sequential
+```
 
-## Reproducibility and checks
+## Outputs and reproducibility
 
-The tests include real CPU training for FedAvg, NNC, AKD and NA-FedAvg,
-standard Flower serialization, numerical fixtures and the original launcher
-regressions. See [reproduction notes](docs/REPRODUCIBILITY.md) and
-[validation](docs/VALIDATION.md) for scope. Published accuracy tables, GPU
-execution, multi-host scheduling and the full journal dataset suite have not
-been reproduced.
+Every run requires a new output directory. `results.json` records configuration,
+versions, sampled logical clients, example counts and round metrics;
+`final-parameters.npz` saves the evaluated global weights. Native simulations
+preserve run-owned caches under the output directory across worker lifetimes.
+They are local simulations using a shared filesystem, not multi-host deployments.
+They do not measure network latency. Final weights are not complete resumable
+optimizer/client-state checkpoints. Synthetic metrics are execution checks only.
+
+The `options` run-config value is the complete runner argument string. Set the selected federation's
+`options.num-supernodes` to exactly the configured client count; mismatches fail
+explicitly. [Flower setup details](docs/FLOWER_APP.md) document identity, state,
+sampling and the tested runtime boundary.
+
+The maintained methods cover label correction, embedding or global-logit AKD,
+and noise-aware aggregation. The unresolved NA-FedAvg paper/source weighting
+convention, teacher normalization and original partition gaps are documented in
+[REPRODUCIBILITY.md](docs/REPRODUCIBILITY.md) and [PAPER_DATA.md](docs/PAPER_DATA.md).
+Teacher manifests bind row identity, source content and feature content. Legacy
+bundled arrays have no verified alignment manifest.
 
 ## Citation
 
-See [CITATION.cff](CITATION.cff). The final journal publication is from 2024; the accepted manuscript appeared online in 2023.
-
-```bibtex
-@article{tsouvalas2024fedln,
-  author = {Tsouvalas, Vasileios and Saeed, Aaqib and Ozcelebi, Tanir and Meratnia, Nirvana},
-  title = {Labeling Chaos to Learning Harmony: Federated Learning with Noisy Labels},
-  journal = {ACM Transactions on Intelligent Systems and Technology},
-  year = {2024},
-  volume = {15},
-  number = {2},
-  articleno = {22},
-  numpages = {26},
-  doi = {10.1145/3626242}
-}
-```
+Use [CITATION.cff](CITATION.cff) or [citation.bib](citation.bib).
 
 ## License
 
-The source retains its original [Apache License 2.0](LICENSE). Cite the authors when using this research implementation; external datasets retain their own terms.
-<!-- nousphera-project-resources -->
-## Project resources
-
-[Project page](https://nousphera.github.io/FedLN/) · [Research overview](https://nousphera.github.io/projects/fedln/) · [A0 poster](https://nousphera.github.io/FedLN/poster.pdf) · [Paper](https://doi.org/10.1145/3626242)
-
-This repository contains the research implementation. The project page and poster summarize the published method and reported experiments; this maintained release does not claim an independent reproduction of those experiments.
+[Apache-2.0](LICENSE). External datasets and pretrained models retain their own terms.

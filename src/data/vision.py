@@ -21,8 +21,9 @@ def raw_vision(name,root=None):
     root=Path(root or os.environ.get('FEDLN_DATA_ROOT','data'))
     path=root/f'{base}.npz'
     if path.exists():
-        with np.load(path,allow_pickle=False) as file:
-            arrays=tuple(np.array(file[k]) for k in ('train_images','train_labels','test_images','test_labels'))
+        from prepared_arrays import read_arrays
+        data = read_arrays(path, base)
+        arrays = tuple(data[k] for k in ('train_images','train_labels','test_images','test_labels'))
     elif base=='pathmnist':
         raise FileNotFoundError(f'{path}: obtain the official PathMNIST NPZ; see docs/PAPER_DATA.md')
     else:

@@ -14,3 +14,8 @@ runs/
 /data/
 /features/
 .venv-*/
+
+# Python packaging outputs
+build/
+dist/
+*.egg-info/

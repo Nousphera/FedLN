@@ -81,3 +81,17 @@ atol=1e-5`; maximum absolute difference was `1.8597e-5`, mean absolute differenc
 were not bitwise identical. This is a bounded compatibility check, not evidence
 of equivalent benchmark results. The TensorFlow training implementation did not
 change, so its previously passing 43-test suite was not rerun for this follow-up.
+
+
+## Setup and native execution follow-up
+
+The final Python 3.11 CPU suite passed **52 tests**. Added checks cover
+prepared NPZ import/validation, wrong image shape/labels, no overwrite, content
+tampering, safe tar extraction and data-loader consumption. Public corpora were
+not downloaded in this check; generated source NPZ files were prepared with the
+public CLI and consumed by actual training. No benchmark result is inferred.
+
+Real `flwr run .` local simulations completed using pinned Flower 1.13.1 and
+Ray 2.10.0, with real client updates and saved final arrays/results. Tests also
+cover stable logical-ID sampling despite changed transport IDs and effective
+post-evaluation checkpoint weights. See [FLOWER_APP.md](FLOWER_APP.md).

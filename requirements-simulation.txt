@@ -1,0 +1,4 @@
+# Flower 1.13 retains TensorFlow 2.15-compatible protobuf constraints.
+flwr[simulation]==1.13.1
+ray==2.10.0
+click>=8.1,<8.2

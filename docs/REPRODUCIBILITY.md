@@ -1,5 +1,10 @@
 # Reproducibility and method correspondence
 
+The native `flwr run .` path is documented in [FLOWER_APP.md](FLOWER_APP.md).
+The sequential commands below remain useful for CPU debugging; both paths reuse
+the same maintained algorithm core. [DATA_SETUP.md](DATA_SETUP.md) provides the
+current preparation/import/validation entry points.
+
 The maintained entry point is `python run.py`. It invokes the original method
 clients and server strategies with TensorFlow 2.15.1 and Flower 1.13.1. Clients
 train sequentially on one host; every fit request and response passes through

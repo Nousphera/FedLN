@@ -17,7 +17,7 @@ METHODS = {'nnc': 'fedln/fedln__nnc.py', 'akd': 'fedln/fedln__akd.py',
            'confidence_learning': 'baselines/fedavg__cl.py'}
 
 
-def main(argv=None):
+def main(argv=None, *, driver=None, client_id=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--method', choices=METHODS, default='nnc')
     parser.add_argument('--device', choices=['cpu', 'cuda'], default='cpu')
@@ -27,7 +27,7 @@ def main(argv=None):
     options, forwarded = parser.parse_known_args(argv)
     if options.method_help: forwarded.append('--help')
     output = options.output.resolve()
-    if not options.method_help and output.exists() and any(output.iterdir()):
+    if client_id is None and not options.method_help and output.exists() and any(output.iterdir()):
         parser.error('Output directory is not empty; choose a new directory')
     os.environ['FEDLN_DEVICE'] = options.device
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -55,16 +55,22 @@ def main(argv=None):
               'runtime': {'python': platform.python_version(), 'platform': platform.platform(),
                           'tensorflow': tf.__version__, 'flower': fl.__version__, 'numpy': np.__version__}, 'rounds': []}
     # Files are owned by this invocation; no existing cache directory is deleted.
-    with tempfile.TemporaryDirectory(prefix='cache-', dir=output) as cache:
+    from contextlib import nullcontext
+    native = driver is not None or client_id is not None
+    if native: (output / 'cache').mkdir(exist_ok=True)
+    with (nullcontext(str(output / 'cache')) if native else tempfile.TemporaryDirectory(prefix='cache-', dir=output)) as cache:
         if hasattr(args, 'temp_dir'): args.temp_dir = cache
         if hasattr(args, 'embeddings_dir'):
             if args.dataset_name == 'synthetic':
                 from data.synthetic import features
                 args.embeddings_dir = cache
-                np.save(Path(cache) / 'synthetic.npy', features(args.seed))
+                if client_id is None:
+                    np.save(Path(cache) / 'synthetic.npy', features(args.seed))
             else:
                 path = Path(args.embeddings_dir)
                 args.embeddings_dir = str(path.resolve() if path.is_absolute() else (ROOT / 'src' / path).resolve())
+        if client_id is not None:
+            return experiment.create_client(str(client_id))
         from utils.features import source_digest, array_digest
         artifacts = {}
         if args.dataset_name != 'synthetic':
@@ -79,6 +85,9 @@ def main(argv=None):
                 artifacts['feature_manifest'] = json.loads(manifest.read_text()) if manifest.exists() else None
         report['input_artifacts'] = artifacts
         server = experiment.create_server()
+        if driver is not None:
+            from native_transport import run_native
+            return run_native(driver, server, args.num_rounds, args.num_clients, args.seed, output, report)
         strategy = server.strategy
         parameters = strategy.initial_parameters
         # configure_fit owns sampling, including all-client NA-FedAvg warmup.

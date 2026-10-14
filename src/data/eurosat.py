@@ -25,7 +25,7 @@ def load_eurosat(shard_id=0, num_shards=None, batch_size=128, seed=42, noisy_cli
 	np.random.seed(seed)
 	data = np.load(eurosat_data_path())
 	images, labels = data['images'][:21600], data['labels'][:21600]
-	num_classes = len(np.unique(labels))
+	num_classes = 10
 	# Get shard of dataset
 	if num_shards is not None:
 		(images,labels), idxs = shard_data(data=(images,labels), id=shard_id, num_shards=num_shards, seed=seed)
@@ -44,7 +44,7 @@ def load_eurosat(shard_id=0, num_shards=None, batch_size=128, seed=42, noisy_cli
 def load_eurosat_test(batch_size=128):
 	data = np.load(eurosat_data_path())
 	images, labels = data['images'][21600:], data['labels'][21600:]
-	num_classes = len(np.unique(labels))
+	num_classes = 10
 	labels = np.array(tf.keras.utils.to_categorical(labels, num_classes), dtype=np.float32)
 	ds = tf.data.Dataset.from_tensor_slices((images,labels)).map(valid_prep, num_parallel_calls=AUTO).batch(batch_size)
 	ds = ds.prefetch(AUTO)
