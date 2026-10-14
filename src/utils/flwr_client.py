@@ -8,7 +8,7 @@ class _Client(fl.client.NumPyClient):
 		self.shuffle = shuffle
 		if load_data:
 			self.data, self.num_classes, self.num_samples, self.labels, self.idxs = data_loader(shard_id=int(cid), num_shards=num_clients, shuffle=self.shuffle,
-				batch_size=kwargs['batch_size'], seed=kwargs['batch_size'], noisy_clients_frac=kwargs['noisy_clients_frac'], noise_lvl=kwargs['noise_lvl'], noise_sparsity=kwargs['noise_sparsity'])
+				batch_size=kwargs['batch_size'], seed=kwargs['seed'], noisy_clients_frac=kwargs['noisy_clients_frac'], noise_lvl=kwargs['noise_lvl'], noise_sparsity=kwargs['noise_sparsity'])
 			if shuffle: del self.labels # labels order is not preserved for shuffle==true
 		self.model_loader = model_loader
 		if load_data:

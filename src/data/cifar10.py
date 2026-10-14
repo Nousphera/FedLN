@@ -18,7 +18,7 @@ def load_cifar(shard_id=0, num_shards=None, batch_size=128, seed=42, noisy_clien
 	num_classes = len(np.unique(labels))
 	# Get shard of dataset
 	if num_shards is not None:
-		(images,labels), idxs = shard_data(data=(images,labels), id=shard_id, num_shards=num_shards)
+		(images,labels), idxs = shard_data(data=(images,labels), id=shard_id, num_shards=num_shards, seed=seed)
 	labels = np.array(tf.keras.utils.to_categorical(labels, num_classes), dtype=np.float32)
 	if corrected_labels is not None: labels = corrected_labels
 	# Inject synthetic noise

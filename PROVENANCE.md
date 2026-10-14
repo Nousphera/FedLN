@@ -10,3 +10,12 @@ This repository is an independent Nousphera copy of [FedLN](https://github.com/F
 Maintenance changes after this baseline improve documentation, setup, and validation. They do not constitute a new reproduction of the published experiments. For the original code and configuration, inspect the baseline tag.
 
 GitHub issues, pull requests, stars, releases, and Pages configuration are not part of Git history and have not been transferred. Existing discussions remain at the source repository.
+
+## Maintained execution release (2026-10-15)
+
+The new `run.py` uses the original clients/models/strategies, CPU execution and
+stock Flower serialization. Numerical bug fixes, AKD projection ownership and
+remaining paper/source discrepancies are itemized in `docs/REPRODUCIBILITY.md`.
+The original requirements remain in `src/requirements.txt`; maintained pins are
+in the root requirements file. No private history, dataset or trained result was
+added. Synthetic features are generated fixtures, not recovered CLIP artifacts.

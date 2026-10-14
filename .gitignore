@@ -6,3 +6,6 @@ __pycache__/
 src/tmp/
 src/data/eurosat/
 *.log
+
+runs/
+*.npz

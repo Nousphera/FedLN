@@ -8,3 +8,4 @@ __all__ = [
 	"load_cifar_test",
 
 ]
+from .synthetic import load_synthetic, load_synthetic_test

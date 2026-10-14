@@ -33,10 +33,11 @@ def prune_with_cleanlab(data, num_classes, num_samples, model, compile_args, lab
 	if verbose: print(f'Prunned {100*(prune_idx.shape[0]/num_samples):.02f} % of dataset [Number Samples: {num_samples} / {_num_samples}]')
 	return data, _num_samples, prune_idx
 
-def prune_from_idx(data, num_samples, idxs):
+def prune_from_idx(data, num_samples, idxs, batch_size=128):
+	data = data.unbatch()
 	data = data.enumerate().filter(functools.partial(prune_fn, idxs=idxs)).map(tf.autograph.experimental.do_not_convert(lambda _,x: x), num_parallel_calls=tf.data.AUTOTUNE)
 	_num_samples = num_samples - idxs.shape[0]
-	return data, _num_samples
+	return data.batch(batch_size).prefetch(tf.data.AUTOTUNE), _num_samples
 
 @tf.function
 def filter_fn(i,x, idxs):
@@ -44,13 +45,13 @@ def filter_fn(i,x, idxs):
 
 @tf.function
 def prune_fn(i,x, idxs):
-	return tf.reduce_any(tf.not_equal(i, idxs), -1)
+	return tf.reduce_all(tf.not_equal(i, idxs), -1)
 
 def StratifiedKFold(ds, labels=None, num_classes=None, num_splits=2):
 
 	kfold_data = []
 	# Get labels
-	if labels is None: labels = [y for _,y in ds]
+	if labels is None: labels = np.asarray([y for _,y in ds])
 	# Get labels shape
 	one_hot_labels = len(labels.shape)==2
 	# Convert to one hot labels

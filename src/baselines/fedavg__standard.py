@@ -31,6 +31,7 @@ def load_available_datasets(train=True):
 	return {
 		'eurosat': data.load_eurosat if train else data.load_eurosat_test, 
 		'cifar10': data.load_cifar if train else data.load_cifar_test,
+        'synthetic': data.load_synthetic if train else data.load_synthetic_test,
 	}
 
 def load_available_models():
@@ -41,9 +42,9 @@ def load_available_models():
 	}
 
 def create_client(cid):
-	sleep(int(cid)*0.75)
+	if os.environ.get('FEDLN_DEVICE') != 'cpu': sleep(int(cid)*0.75)
 	os.environ['CUDA_DEVICE_ORDER']="PCI_BUS_ID"
-	os.environ['CUDA_VISIBLE_DEVICES'] = '0'#grab_gpu()
+	os.environ['CUDA_VISIBLE_DEVICES'] = grab_gpu()
 	sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 	from utils.flwr_client import _Client as Client
 	load_model = load_available_models()[args.model_name]
@@ -54,7 +55,7 @@ def create_client(cid):
 
 def create_server():
 	os.environ['CUDA_DEVICE_ORDER']="PCI_BUS_ID"
-	os.environ['CUDA_VISIBLE_DEVICES'] = '0'#grab_gpu()
+	os.environ['CUDA_VISIBLE_DEVICES'] = grab_gpu()
 	from utils.flwr_server import _Server as Server
 	load_model = load_available_models()[args.model_name]
 	load_test_data = load_available_datasets(train=False)[args.dataset_name]

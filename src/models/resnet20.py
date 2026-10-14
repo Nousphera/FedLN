@@ -117,4 +117,4 @@ def load_model(input_shape, num_classes, l2_reg=1e-4, shortcut_type="A", block_t
 							shortcut_type=shortcut_type, block_type=block_type, preact_shortcuts=False)
 
 def load_initial_model_weights(input_shape, num_classes):
-	return ResNet20.load_model(input_shape=input_shape, num_classes=num_classes).get_weights()
+	return load_model(input_shape=input_shape, num_classes=num_classes).get_weights()

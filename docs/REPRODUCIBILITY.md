@@ -1,53 +1,108 @@
-# Reproducing FedLN experiments
+# Reproducibility and method correspondence
 
-## Baseline and validation boundary
+The maintained entry point is `python run.py`. It invokes the original method
+clients and server strategies with TensorFlow 2.15.1 and Flower 1.13.1. Clients
+train sequentially on one host; every fit request and response passes through
+stock Flower protobuf serialization. This is a computation/transport check,
+not a distributed timing benchmark. The old `src/run.sh` Ray entry points and
+`src/requirements.txt` remain for historical inspection. Their distributed
+execution is not qualified with the maintained environment.
 
-The original implementation is available at the `federatedml-baseline` tag; see [provenance](../PROVENANCE.md) for its source and history. The maintenance changes repair entry points, defer EuroSAT configuration, isolate disposable cache directories, and fail promptly when GPU discovery finds no NVIDIA hardware. They do not change model architectures, optimization, random seeds, partitions, noise generation, KNN decisions, or aggregation formulas.
+## Setup and bounded checks
 
-Dependency-light tests exercise launch dispatch/help, missing data/GPU behavior, cache ownership, centralized evaluation plumbing, and NumPy data invariants. TensorFlow training, Flower/Ray workers, GPU execution, and the paper's quantitative results have not been validated in this maintenance pass. Tests that mock training do not establish distributed compatibility.
+Use Python 3.11 in an isolated environment:
 
-## Historical environment
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m pip check
+python -m pytest -q
+python run.py --method akd --dataset_name synthetic --num_clients 2 \
+  --num_rounds 2 --train_epochs 1 --batch_size 8 --knn_neighbors 5 \
+  --output runs/akd-smoke
+```
 
-`src/requirements.txt` retains the original pins, including TensorFlow 2.10.1, Keras 2.10.0, TensorFlow Addons 0.19.0, Flower 1.4.0, Ray 2.2.0, NumPy 1.24.1, and scikit-learn 1.2.0. It is an archival environment specification, not a currently verified install lock.
+The generated fixture has 32 training and eight test images with two classes,
+and deterministic 512-dimensional features derived from the fixture labels.
+It is not CIFAR, CLIP, or evidence of method accuracy. Runs write configuration,
+runtime versions, round losses/accuracies, sample counts and client metrics to
+`results.json`, and global arrays to `final-parameters.npz`. Use a new output
+directory for every invocation. Temporary per-client caches are owned and
+cleaned by that invocation. A failed process may leave its own cache directory.
 
-Published [TensorFlow 2.10.1](https://pypi.org/project/tensorflow/2.10.1/#files) and [Ray 2.2.0](https://pypi.org/project/ray/2.2.0/#files) wheels include CPython 3.10. TensorFlow 2.10.1 has no native macOS arm64 wheel under that package name. Python 3.10 on Linux with NVIDIA hardware is therefore a candidate starting point, not a tested environment guarantee. Do not interpret successful Python 3.14 syntax or utility tests as support for training with that interpreter.
+The default device is CPU. `--device cuda` uses the original GPUtil selection
+and needs a working NVIDIA setup; GPU and multi-host runs are not validated.
+`--method-help` displays method-specific underscore-style arguments.
 
-There is a retained dependency discrepancy: [Flower 1.4.0 package metadata](https://pypi.org/pypi/flwr/1.4.0/json) declares `ray[default]>=2.3.0,<3.0.0` for its simulation extra, while this repository directly pins `ray==2.2.0`. A bare `flwr` installation and `pip check` may not flag the optional-extra constraint. Resolve and record this in a separate environment-validation effort before claiming that simulations reproduce the paper; no dependency version has been silently changed here.
+## Paper experiments and available inputs
 
-Most experiment scripts select an NVIDIA GPU through GPUtil and wait while detected GPUs are busy. An empty GPU inventory now raises an actionable error. The historical standard FedAvg and centralized scripts still select GPU IDs `0` and `1`, respectively. CPU and Apple GPU training have not been qualified. The scripts do not provide portable distributed resource scheduling.
+The final TIST article describes three **alternative** methods: NNC corrects
+labels before local training; AKD applies MAE feature supervision to clients
+whose estimated noise exceeds 0.15; NA-FedAvg estimates energy scores once and
+then changes aggregation weights. This repository supplies CIFAR-10 and
+EuroSAT. It does not supply the final paper's full audio, human-noise,
+FashionMNIST or PathMNIST experimental pipelines.
 
-Before a scientific run, record the Git revision, command, Python/package versions, GPU/driver/runtime versions, dataset/embedding hashes, and output logs. Keep any environment adaptations distinct from the original pins.
+A configuration matching the main paper's exposed CIFAR-10 settings is:
 
-## Data contracts
+```bash
+python run.py --method nnc --dataset_name cifar10 --model_name resnet20 \
+  --num_clients 30 --num_rounds 200 --participation_rate .8 \
+  --train_epochs 1 --batch_size 128 --lr .001 --knn_neighbors 100 \
+  --noisy_frac .8 --noise_level .4 --noise_sparsity .7 --seed 42 \
+  --output runs/cifar10-nnc-seed42
+```
 
-CIFAR-10 images and labels come from `tf.keras.datasets.cifar10.load_data()`. The shipped `features/cifar10.npy` has shape `(50000, 512)` and float16 values; rows are indexed using training-set shard indices.
+Change `nnc` to `akd` for feature distillation. NA-FedAvg uses
+`--method na_fedavg --est_noise_round 30 --percentile 75` and does not accept
+`--knn_neighbors`. The paper studies multiple noise levels/sparsities and
+three trials; one command does not reproduce its tables. The supplied random
+sharding also differs from the paper's explicitly controlled 25% quantity
+variance. These commands exercise the released subset, not all paper settings.
 
-EuroSAT requires an NPZ archive with `images` and `labels` arrays at `${TFDS_DATA_DIR}/eurosat/eurosat.npz`, defaulting to `src/data/eurosat/eurosat.npz`. The implementation takes rows `[:21600]` as training data and `[21600:]` as test data. Its shipped embedding array has shape `(27000, 512)`, float16. The image archive, original archive ordering procedure, and embedding-generation script are not present. A newly downloaded or shuffled EuroSAT dataset cannot be assumed to align with these embeddings. Preserve and verify the original order before running NNC or AKD; do not substitute a newly invented split and label it a reproduction.
+CIFAR-10 downloads through Keras. Its included embedding array has 50,000 rows
+and 512 float16 columns; indices refer to the Keras training order. EuroSAT
+requires `eurosat/eurosat.npz` below `TFDS_DATA_DIR` (or `src/data`), with
+`images` and `labels`. The original first 21,600 rows train and the remaining
+5,400 test. Its embeddings have 27,000 rows. The original EuroSAT archive/order
+and embedding extraction scripts are unavailable: a newly shuffled dataset
+cannot be assumed to align. No embedding files were changed by maintenance.
+Record dataset/embedding hashes, seeds and hardware before a scientific run.
 
-Both embedding arrays were read successfully and checked for finite values during maintenance. Their values, rows, and file contents were not changed. No trained final model checkpoint or complete audio experiment pipeline is shipped. Audio helper functions do not make the paper's audio experiments runnable from the provided entry points.
+## Correctness repairs and remaining source conventions
 
-## Research-sensitive behaviors retained
+The original baseline remains at `federatedml-baseline`; the pre-repair audit is
+[HISTORICAL_AUDIT.md](HISTORICAL_AUDIT.md). Maintenance changes affect numerical
+outcomes and should be reported when comparing with published tables:
 
-The following are confirmed source observations, not proposed method changes. Line references describe this maintenance revision; the named function is the stable locator.
+- KNN keeps scikit-learn's fitted class IDs, including shards missing classes.
+- CLI seed reaches all repeated data loads and shard construction; AKD uses the
+  same labels, order, batch size and noise settings as its original client.
+- uint8 image normalization scales once instead of twice. TensorFlow's native
+  GroupNormalization replaces Addons. The original fixed-origin cutout is
+  preserved: for the CIFAR mask size 16, the visible 8×8 top-left area is zero.
+  It is not a random crop location. See [Addons' original implementation](https://github.com/tensorflow/addons/blob/v0.23.0/tensorflow_addons/image/cutout_ops.py).
+- AKD transmits only classifier weights. Its private projection is cached by
+  client identity and reused in later rounds; embedding dimensions are checked.
+  Clients first participating after the activation round still estimate noise.
+- Server evaluation includes categorical cross-entropy. Distillation supports
+  models without regularization and evaluates only classification outputs.
+- Confident-learning filtering now removes every selected example, including
+  when restoring a cached mask; it no longer filters batches as examples.
+- NA-FedAvg handles client IDs as identities and requires all warmup scores.
 
-| Location | Behavior and implication |
-| --- | --- |
-| [`src/utils/flwr_client.py:11`](../src/utils/flwr_client.py#L11), `_Client.__init__` | Passes `seed=kwargs['batch_size']` to the loader. The configured CLI seed is therefore not used on this path. |
-| [`src/fedln/fedln__akd.py:91`](../src/fedln/fedln__akd.py#L91) and line 103, `AKDClient.fit` | Reloads data without forwarding CLI noise, seed, or batch settings. Lines 106–109 also retain 512 embedding dimensions and batch size 128 on the distillation path. |
-| [`src/fedln/fedln__nnc.py:75`](../src/fedln/fedln__nnc.py#L75), `NNCClient.__init__` | Repeated loader calls omit the CLI seed, retaining loader defaults. |
-| [`src/utils/knn_relabel.py:9`](../src/utils/knn_relabel.py#L9) and line 21 | Replaces fitted `knn.classes_` with all class IDs. A one-neighbour fixture with labels `[1,1,3,3]` and separated features returned `[0,0,1,1]` in the audit environment (NumPy 2.4.1, scikit-learn 1.8.0); this was not a test of the pinned historical scikit-learn version. Shards missing classes need scientific review. |
-| [`src/utils/energy_noise_estimation.py:23`](../src/utils/energy_noise_estimation.py#L23), `compute_noise_estimation` | Uses `min(min_effect * n, n - noisy)` for affected client weights. No reinterpretation as a lower bound or change from `min` to `max` has been made. |
-| [`src/utils/shard.py:3`](../src/utils/shard.py#L3), `shard_data` | Resets NumPy's global seed and randomly assigns samples to shards; this is not a guarantee of equal shard sizes or a configurable non-IID benchmark split. |
-| [`src/utils/distiller.py:13`](../src/utils/distiller.py#L13), `Distiller.compile/train_step` | Retains MAE feature distillation with `alpha=10`; the stored temperature is not applied in the shown loss calculation. |
+**NA-FedAvg ambiguity is retained explicitly:** the final article says noisy
+instances are below the energy threshold, but defines a step function for
+values above it. Recovered code uses `local_energy >= percentile(global_energy)`
+and, for affected clients, `min(0.1*n, n-noisy)` as impact. The paper's
+aggregation description instead gives `(1-noise_fraction)*n`. This release
+keeps the recovered convention rather than declaring either reading an exact
+paper reproduction. Zero total impact raises a clear error instead of dividing
+by zero. If a later participating subset has zero total impact, its update is
+skipped explicitly and the previous global model is retained. This limitation must be resolved with the original experiment records
+before quantitative reproduction claims.
 
-Changing these behaviors may change experimental outcomes. Such fixes need an explicit methodological decision and comparisons against the retained implementation. In particular, the passing maintenance tests do not certify the KNN class-mapping or seed behavior as correct.
-
-## Cache lifecycle
-
-NNC, AKD, NA-FedAvg, and confident learning allocate a unique child directory under `--temp_dir` for each simulation. They clean only that directory on normal exit or Python exception and restore the original parent argument. A forced process termination can leave a child directory behind. Existing parent contents are not reused as experiment caches and are not deleted. Distributed worker lifecycle under this change still needs a real Flower/Ray smoke test.
-
-## Publication metadata and reported results
-
-The [ACM record](https://doi.org/10.1145/3626242) identifies the final article as TIST **15(2), Article 22, pages 1–26 (2024)**, published 22 February 2024; its accepted manuscript was online 9 October 2023. This explains the 2023 citation retained in the historical repository.
-
-The original project page and README had different numeric summaries from the final journal abstract. The refreshed overview omits those conflicting numbers; retained figures are identified as historical research figures. Consult the final paper for the precise protocol, comparator, dataset, and metric. No figure or reported result was regenerated during maintenance.
+AKD includes embedding supervision with MAE and coefficient 10; its stored
+historical temperature does not enter the MAE objective. Logit-teacher AKD,
+embedding extraction and full paper datasets are outside the supplied source.

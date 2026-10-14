@@ -37,6 +37,7 @@ def load_available_datasets(train=True):
 	return {
 		'eurosat': data.load_eurosat if train else data.load_eurosat_test, 
 		'cifar10': data.load_cifar if train else data.load_cifar_test,
+        'synthetic': data.load_synthetic if train else data.load_synthetic_test,
 	}
 
 def load_available_models():
@@ -47,7 +48,7 @@ def load_available_models():
 	}
 
 def create_client(cid):
-	sleep(int(cid)*0.75)
+	if os.environ.get('FEDLN_DEVICE') != 'cpu': sleep(int(cid)*0.75)
 	os.environ['CUDA_DEVICE_ORDER']="PCI_BUS_ID"
 	os.environ['CUDA_VISIBLE_DEVICES'] = grab_gpu()
 	sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
@@ -79,11 +80,11 @@ def create_client(cid):
 			assert (not self.shuffle), "Shuffle must be deactivated for prunning noisy samples with Confidence Learning"
 			# Remove prunned samples
 			if prune_idxs is not None:
-				self.data, self.num_samples = prune_from_idx(data=self.data, num_samples=self.num_samples, idxs=prune_idxs)
+				self.data, self.num_samples = prune_from_idx(data=self.data, num_samples=self.num_samples, idxs=prune_idxs, batch_size=kwargs['batch_size'])
 			else: # Run CL prunning process
 				self.data, self.num_samples, prune_idxs = prune_with_cleanlab(data=self.data, num_classes=self.num_classes, num_samples=self.num_samples, 
                                                             labels=self.labels, model=cleanlab_model, compile_args=model_compile_args,
-                                                            num_folds=cleanlab_folds, train_epochs=cleanlab_epochs, verbose=True)
+                                                            num_folds=cleanlab_folds, train_epochs=cleanlab_epochs, batch_size=kwargs['batch_size'], verbose=True)
 				tf.keras.backend.clear_session()
 				# Store to file if exist
 				if not os.path.isdir(f"{temp_dir}"): os.makedirs(f"{temp_dir}")

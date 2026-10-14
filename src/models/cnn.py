@@ -1,17 +1,16 @@
 import tensorflow as tf
-import tensorflow_addons as tfa
 
 
 def _conv_block(x, num_features, l2_reg, dropout_rate=0.1, add_max_pool=True,):
 	x_t = tf.keras.layers.Conv2D(num_features, (1, 4), padding = "same", kernel_regularizer=tf.keras.regularizers.l2(l2_reg))(x)
-	x_t = tfa.layers.GroupNormalization(groups=4)(x_t)
+	x_t = tf.keras.layers.GroupNormalization(groups=4)(x_t)
 	x_t = tf.keras.layers.Activation("relu")(x_t)
 	x_f = tf.keras.layers.Conv2D(num_features, (4, 1), padding = "same", kernel_regularizer=tf.keras.regularizers.l2(l2_reg))(x)
-	x_f = tfa.layers.GroupNormalization(groups=4)(x_f)
+	x_f = tf.keras.layers.GroupNormalization(groups=4)(x_f)
 	x_f = tf.keras.layers.Activation("relu")(x_f)
 	x = tf.keras.layers.Concatenate(axis=-1)([x_t, x_f])
 	x = tf.keras.layers.Conv2D(num_features, (1, 1), padding = "same", kernel_regularizer=tf.keras.regularizers.l2(l2_reg))(x)
-	x = tfa.layers.GroupNormalization(groups=4)(x)
+	x = tf.keras.layers.GroupNormalization(groups=4)(x)
 	x = tf.keras.layers.Activation("relu")(x)
 	if add_max_pool:
 		x = tf.keras.layers.MaxPooling2D(pool_size=(2, 2))(x)

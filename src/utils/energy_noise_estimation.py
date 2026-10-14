@@ -13,15 +13,24 @@ def compute_energy_score(model, data, cid=None):
 	return score
 
 def compute_noise_estimation(scores, percentile=75, noise_threshold=0.15, min_effect=0.1):
-	nu_percentile = np.percentile(scores[:,1], q=percentile)
-	est_noise_mask = scores[scores[:,2]>=nu_percentile]
-	num_clients = len(np.unique(scores[:,0]))
-	num_samples = [scores[scores[:,0]==i].shape[0] for i in range(num_clients)]
-	num_noisy_samples = [est_noise_mask[est_noise_mask[:,0]==i].shape[0] for i in range(num_clients)]
-	estimated_noise = [float(num_noisy_samples[i]/num_samples[i]) if (num_noisy_samples[i]/num_samples[i])>=noise_threshold else 0.0 for i in range(num_clients)]
-	[print(f"Noise estimation of client {i} is {100*estimated_noise[i]:.2f}") for i in range(num_clients)]
-	noise_aware_weights = {i: min(min_effect*num_samples[i],num_samples[i]-num_noisy_samples[i]) if estimated_noise[i]>0.0 else num_samples[i] for i in range(num_clients)}
-	return noise_aware_weights
+	"""Retain the recovered >= threshold and capped-impact convention.
+
+	The final paper prose says below threshold; its Heaviside definition says
+	above. This implementation keeps the original choice, documented explicitly.
+	"""
+	scores = np.asarray(scores)
+	if scores.ndim != 2 or scores.shape[1] != 3 or not len(scores) or not np.isfinite(scores).all():
+		raise ValueError('Expected finite [client ID, global energy, local energy] rows')
+	nu_percentile = np.percentile(scores[:, 1], q=percentile)
+	weights = {}
+	for cid in np.unique(scores[:, 0]):
+		client_scores = scores[scores[:, 0] == cid]
+		n = len(client_scores)
+		noisy = np.count_nonzero(client_scores[:, 2] >= nu_percentile)
+		weights[int(cid)] = min(min_effect * n, n - noisy) if noisy / n >= noise_threshold else n
+	if sum(weights.values()) <= 0:
+		raise ValueError('Historical energy convention assigns zero total client impact')
+	return weights
 
 class NAFedAvg(fl.server.strategy.FedAvg):
 
@@ -34,6 +43,7 @@ class NAFedAvg(fl.server.strategy.FedAvg):
 		self.clients_impact=None
 
 	def configure_fit(self, server_round, parameters, client_manager):
+		self._round_parameters = parameters
 		config = {}
 		if self.on_fit_config_fn is not None: config = self.on_fit_config_fn(server_round)
 		fit_ins = fl.common.FitIns(parameters, config)
@@ -49,7 +59,10 @@ class NAFedAvg(fl.server.strategy.FedAvg):
 	def aggregate_fit(self, server_round, results, failures):
 
 		# Compute clients impact
-		if self.clients_impact is None: self.clients_impact = self.set_clients_impact_fn(percentile=self.percentile)
+		if self.clients_impact is None and server_round >= self.compute_round:
+			if failures or len(results) != self.num_clients:
+				raise ValueError("Noise estimation requires scores from all clients in the warmup round")
+			self.clients_impact = self.set_clients_impact_fn(percentile=self.percentile)
 		if not results: return None, {}
         # Do not aggregate if there are failures and failures are not accepted
 		if not self.accept_failures and failures: return None, {}
@@ -58,6 +71,8 @@ class NAFedAvg(fl.server.strategy.FedAvg):
 			weights_results = [(fl.common.parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples) for _, fit_res in results]
 		else:
 			weights_results = [(fl.common.parameters_to_ndarrays(fit_res.parameters), self.clients_impact[int(fit_res.metrics['cid'])]) for _, fit_res in results]
+		if sum(weight for _, weight in weights_results) <= 0:
+			return self._round_parameters, {"update_skipped_zero_impact": True}
 		parameters_aggregated = fl.common.ndarrays_to_parameters(fl.server.strategy.aggregate.aggregate(weights_results))
 		# Aggregate custom metrics if aggregation fn was provided
 		metrics_aggregated = {}

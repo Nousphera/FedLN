@@ -2,7 +2,7 @@
 
 FedLN estimates label noise on federated clients and uses those estimates during initialization, local training, or server aggregation. This repository contains the TensorFlow/Flower research implementation, with CIFAR-10 and EuroSAT loaders and CNN/ResNet20 models.
 
-This independent Nousphera copy preserves the history and attribution of [FederatedML/FedLN](https://github.com/FederatedML/FedLN); see [provenance](PROVENANCE.md). Maintenance changes address launch/setup failures and documentation; the research algorithms and historical dependency pins remain unchanged.
+This independent Nousphera copy preserves the history and attribution of [FederatedML/FedLN](https://github.com/FederatedML/FedLN); see [provenance](PROVENANCE.md). Maintenance repairs seed propagation, label correction, preprocessing and transport errors while retaining the original history and archival dependency pins. These repairs can change numerical results.
 
 ## Paper
 
@@ -18,31 +18,31 @@ The journal evaluates a wider set of vision/audio datasets than the loaders ship
 
 ## Quick start
 
+Python 3.11, TensorFlow 2.15.1 and stock Flower 1.13.1 are used by the maintained
+CPU runner. Original clients train sequentially with standard Flower message
+serialization, without a Ray cluster or patched framework.
+
 ```bash
 git clone https://github.com/Nousphera/FedLN.git
 cd FedLN
-./src/run.sh --help
-./src/run.sh nnc --help
-```
-
-For training, use an isolated legacy environment on an NVIDIA-equipped machine. Python 3.10 is a candidate based on published TensorFlow/Ray wheels; a fresh installation and training run have **not** been validated. The retained pins include a Flower/Ray simulation-version discrepancy; read [reproduction notes](docs/REPRODUCIBILITY.md) before installing.
-
-```bash
-python3.10 -m venv .venv
+python3.11 -m venv .venv
 source .venv/bin/activate
-python -m pip install -r src/requirements.txt
-python -m pip check
+python -m pip install -r requirements.txt
+python run.py --method nnc --dataset_name synthetic --num_clients 2 \
+  --num_rounds 2 --train_epochs 1 --batch_size 8 --knn_neighbors 5 \
+  --output runs/nnc-smoke
+python -m pytest -q
 ```
 
-The historical CIFAR-10 experiment invocation is:
+Select `--method akd`, `na_fedavg` or `fedavg` for the other primary paths.
+For the short NA-FedAvg check add `--est_noise_round 1`. Use
+`--method-help` for all method arguments. The synthetic fixture tests execution;
+it is not a pretrained embedding or a paper result.
 
-```bash
-./src/run.sh nnc --dataset_name cifar10 --model_name resnet20 \
-  --num_rounds 100 --num_clients 10 --noisy_frac 0.8 \
-  --noise_level 0.4 --noise_sparsity 0.7
-```
-
-Replace `nnc` with another method below. These are experiment entry points, not verified benchmark recipes. The launcher resolves relative data, embedding, and cache paths from `src/`; absolute paths avoid ambiguity. It also works as `./run.sh` from `src/`.
+[Reproduction notes](docs/REPRODUCIBILITY.md) provide real-data commands,
+data alignment requirements, numerical fixes, and the unresolved NA-FedAvg
+paper/source convention. The original Ray launcher remains at `src/run.sh`,
+and its historical dependency list remains at `src/requirements.txt`.
 
 ## Methods
 
@@ -57,7 +57,7 @@ Replace `nnc` with another method below. These are experiment entry points, not 
 | `confidence_learning` | FedAvg with confident learning | Local cross-validation |
 | `centralized` | Centralized training | Uses `--epochs`, not `--num_rounds` |
 
-Use `METHOD --help` for its arguments. The registered dataset names are `cifar10` and `eurosat`; model names are `cnn` and `resnet20`.
+Use `python run.py --method METHOD --method-help` for its arguments; centralized training remains an archival entry point. The registered dataset names are `cifar10` and `eurosat`; model names are `cnn` and `resnet20`.
 
 ## Data and files
 
@@ -70,13 +70,12 @@ Use `METHOD --help` for its arguments. The registered dataset names are `cifar10
 
 ## Reproducibility and checks
 
-[Reproduction notes](docs/REPRODUCIBILITY.md) record the legacy environment, data requirements, and known seed/KNN/distillation behaviors retained for scientific review. CPU/Apple GPU execution and complete distributed training remain unvalidated.
-
-```bash
-python -m unittest discover -s tests -v
-```
-
-Runtime regressions use the standard library and mocked training/GPU calls. Three data-utility checks use NumPy and are skipped if it is unavailable. Passing these checks does not establish model accuracy or paper reproduction.
+The tests include real CPU training for FedAvg, NNC, AKD and NA-FedAvg,
+standard Flower serialization, numerical fixtures and the original launcher
+regressions. See [reproduction notes](docs/REPRODUCIBILITY.md) and
+[validation](docs/VALIDATION.md) for scope. Published accuracy tables, GPU
+execution, multi-host scheduling and the full journal dataset suite have not
+been reproduced.
 
 ## Citation
 

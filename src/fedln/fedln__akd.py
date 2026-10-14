@@ -39,6 +39,7 @@ def load_available_datasets(train=True):
 	return {
 		'eurosat': data.load_eurosat if train else data.load_eurosat_test, 
 		'cifar10': data.load_cifar if train else data.load_cifar_test,
+        'synthetic': data.load_synthetic if train else data.load_synthetic_test,
     }
 
 def load_available_models():
@@ -49,7 +50,7 @@ def load_available_models():
 	}
 
 def create_client(cid):
-	sleep(int(cid)*0.75)
+	if os.environ.get('FEDLN_DEVICE') != 'cpu': sleep(int(cid)*0.75)
 	os.environ['CUDA_DEVICE_ORDER']="PCI_BUS_ID"
 	os.environ['CUDA_VISIBLE_DEVICES'] = grab_gpu()
 	sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
@@ -63,57 +64,70 @@ def create_client(cid):
 	# Override Client to use Noise-Aware FedAvg #
 	#############################################
 	class AKDClient(Client):
-		def __init__(self, dataset, distil_round, num_neighbors, temp_dir, *args, **kwargs):
-			super(AKDClient, self).__init__(*args, **kwargs)
+		"""Keep the embedding projection local; transmit classifier weights only."""
+		def __init__(self, dataset, distil_round, num_neighbors, temp_dir, *pos, **kwargs):
+			super().__init__(*pos, **kwargs)
 			self.distil_round = distil_round
 			self.dataset = dataset
 			self.num_neighbors = num_neighbors
 			self.data_loader = kwargs['data_loader']
 			self.num_clients = int(kwargs['num_clients'])
-			self.embeddings_params = None
 			self.temp_dir = temp_dir
+			self.loader_kwargs = {k: kwargs[k] for k in
+				('batch_size', 'seed', 'noisy_clients_frac', 'noise_lvl', 'noise_sparsity')}
+			self.noise_path = f'{temp_dir}/noise_{self.cid}.npy'
+			self.projection_path = f'{temp_dir}/projection_{self.cid}.npz'
 
 		@property
 		def noisy(self):
-			return os.path.isfile(f'{self.temp_dir}/noise_{self.cid}.npy')
+			return os.path.isfile(self.noise_path) and float(np.load(self.noise_path)[0]) > 0
 
 		def set_parameters(self, parameters, config):
-			if not hasattr(self, 'model'): self.model = self.model_loader(input_shape=self.input_shape[1:], num_classes=self.num_classes, embeddings_dim=int(args.embeddings_dims) if self.noisy else None)
-			self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=config['lr']), loss=tf.keras.losses.CategoricalCrossentropy(name='loss', from_logits=True), metrics=[tf.keras.metrics.CategoricalAccuracy(name='accuracy')])
-			if parameters is not None: 
-				if (self.noisy): parameters = parameters + (self.model.get_weights()[-2:] if self.embeddings_params is None else self.embeddings_params)					
-				self.model.set_weights(parameters)
-   
+			if not hasattr(self, 'student') or self._with_embeddings != self.noisy:
+				self._with_embeddings = self.noisy
+				self.student = self.model_loader(input_shape=self.input_shape[1:], num_classes=self.num_classes,
+					embeddings_dim=int(args.embeddings_dims) if self.noisy else None)
+				self.classifier = tf.keras.Model(self.student.inputs, self.student.outputs[0]) if self.noisy else self.student
+				if self.noisy:
+					self.projection = self.student.outputs[1]._keras_history.layer
+					if os.path.isfile(self.projection_path):
+						with np.load(self.projection_path) as saved:
+							self.projection.set_weights([saved[k] for k in saved.files])
+			if parameters is not None: self.classifier.set_weights(parameters)
+
+		def get_parameters(self, config=None):
+			return self.classifier.get_weights()
+
 		def fit(self, parameters, config):
-
-			# Create distillation process
-			if int(config['round'])==self.distil_round:
-				_data, _, _, _labels, _idxs = self.data_loader(shard_id=int(self.cid), num_shards=self.num_clients, shuffle=False)
-				_data = _data.unbatch()
-				with open(f'{args.embeddings_dir}/{self.dataset}.npy','rb') as f: _features = np.squeeze(np.load(f)[_idxs])
-				estimated_noise = estimate_noise_with_pretrained_knn(labels=_labels, features=_features, num_classes=self.num_classes, num_neighbors=self.num_neighbors, verbose=False)
-				if not os.path.isdir(f"{args.temp_dir}"): os.makedirs(f"{args.temp_dir}")
-				if estimated_noise > 0.0:
-					with open(f'{args.temp_dir}/noise_{self.cid}.npy','wb') as f: np.save(f,np.array([estimated_noise]))
-    
-			# Set parameters
+			_data, _, _, labels, idxs = self.data_loader(shard_id=int(self.cid), num_shards=self.num_clients,
+				shuffle=False, **self.loader_kwargs)
+			idxs = np.asarray(idxs).reshape(-1)
+			features = None
+			if int(config['round']) >= self.distil_round and not os.path.isfile(self.noise_path):
+				features = np.load(f'{args.embeddings_dir}/{self.dataset}.npy')[idxs]
+				estimated_noise = estimate_noise_with_pretrained_knn(labels, features, self.num_classes,
+					num_neighbors=self.num_neighbors)
+				os.makedirs(self.temp_dir, exist_ok=True)
+				np.save(self.noise_path, [estimated_noise])
 			self.set_parameters(parameters, config)
-   
+			self.model = self.student
+			self.data = _data
 			if self.noisy:
-				_data, _, _, _, _idxs = self.data_loader(shard_id=int(self.cid), num_shards=self.num_clients, shuffle=False)
-				with open(f'{args.embeddings_dir}/{self.dataset}.npy','rb') as f: _features = np.squeeze(np.load(f)[_idxs])
-				self.model = Distiller(model=self.model, features=_features, idxs=np.squeeze(_idxs))
-				self.embeddings_dim = 512
-				self.set_parameters(parameters=None, config=config)
-				self.data = tf.data.Dataset.zip((_data.unbatch(), tf.data.Dataset.from_tensor_slices((np.squeeze(_idxs)))))
-				self.data = self.data.batch(batch_size=128).prefetch(tf.data.AUTOTUNE)
-
-			# Client local update
-			h = self.model.fit(self.data, epochs=config['epochs'], verbose=2)
-
-			self.embeddings_params = self.model.get_weights()[-2:]
-			metrics = {'accuracy':float(h.history['accuracy'][-1]), 'loss':float(h.history['loss'][-1])}
+				if features is None: features = np.load(f'{args.embeddings_dir}/{self.dataset}.npy')[idxs]
+				if features.shape[1] != int(args.embeddings_dims):
+					raise ValueError('Embedding width does not match --embeddings_dims')
+				self.model = Distiller(self.student, features, idxs)
+				self.data = tf.data.Dataset.zip((_data.unbatch(), tf.data.Dataset.from_tensor_slices(idxs)))
+				self.data = self.data.batch(self.loader_kwargs['batch_size']).prefetch(tf.data.AUTOTUNE)
+			self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=config['lr']),
+				loss=tf.keras.losses.CategoricalCrossentropy(name='loss', from_logits=True),
+				metrics=[tf.keras.metrics.CategoricalAccuracy(name='accuracy')])
+			h = self.model.fit(self.data, epochs=config['epochs'], verbose=0)
+			if self.noisy: np.savez(self.projection_path, *self.projection.get_weights())
+			metrics = {'accuracy':float(h.history['accuracy'][-1]), 'loss':float(h.history['loss'][-1]),
+				'distillation_active': bool(self.noisy), 'cid': self.cid}
 			return self.get_parameters(), self.num_samples, metrics
+
 	#############################################
 
 	load_model = load_available_models()[args.model_name]

@@ -37,6 +37,7 @@ def load_available_datasets(train=True):
 	return {
 		'eurosat': data.load_eurosat if train else data.load_eurosat_test, 
 		'cifar10': data.load_cifar if train else data.load_cifar_test,
+        'synthetic': data.load_synthetic if train else data.load_synthetic_test,
 	}
 
 def load_available_models():
@@ -47,7 +48,7 @@ def load_available_models():
 	}
 
 def create_client(cid):
-	sleep(int(cid)*0.75)
+	if os.environ.get('FEDLN_DEVICE') != 'cpu': sleep(int(cid)*0.75)
 	os.environ['CUDA_DEVICE_ORDER']="PCI_BUS_ID"
 	os.environ['CUDA_VISIBLE_DEVICES'] = grab_gpu()
 	sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
@@ -76,14 +77,14 @@ def create_client(cid):
 					kwargs['data_loader'](shard_id=int(self.cid), num_shards=int(kwargs['num_clients']),
 						shuffle=True, noisy_clients_frac=kwargs['noisy_clients_frac'],
 						noise_lvl=kwargs['noise_lvl'], noise_sparsity=kwargs['noise_sparsity'],
-						batch_size=kwargs['batch_size'], corrected_labels=labels)
+						batch_size=kwargs['batch_size'], seed=kwargs['seed'], corrected_labels=labels)
 			else: # Run NNC relabelling process
 				_, self.num_classes,_, self.labels, self.idxs = \
 					kwargs['data_loader'](shard_id=int(self.cid), num_shards=int(kwargs['num_clients']),
                         shuffle=False, noisy_clients_frac=kwargs['noisy_clients_frac'],
 						noise_lvl=kwargs['noise_lvl'], noise_sparsity=kwargs['noise_sparsity'],
-						batch_size=kwargs['batch_size'], corrected_labels=None)
-				with open(f'{feat_dir}/{dataset}.npy','rb') as f: features = np.squeeze(np.load(f)[self.idxs])
+						batch_size=kwargs['batch_size'], seed=kwargs['seed'], corrected_labels=None)
+				with open(f'{feat_dir}/{dataset}.npy','rb') as f: features = np.load(f)[np.asarray(self.idxs).reshape(-1)]
 				labels = relabel_with_pretrained_knn(labels=self.labels, features=features, num_classes=self.num_classes,
 													num_neighbors=num_neighbors, verbose=True)
 				kwargs['shuffle']=True
@@ -91,7 +92,7 @@ def create_client(cid):
 					kwargs['data_loader'](shard_id=int(self.cid), num_shards=int(kwargs['num_clients']),
 						shuffle=True, noisy_clients_frac=kwargs['noisy_clients_frac'],
 						noise_lvl=kwargs['noise_lvl'], noise_sparsity=kwargs['noise_sparsity'],
-						batch_size=kwargs['batch_size'], corrected_labels=labels)
+						batch_size=kwargs['batch_size'], seed=kwargs['seed'], corrected_labels=labels)
 				tf.keras.backend.clear_session()
 				# Store to file if exist
 				if not os.path.isdir(f"{temp_dir}"): os.makedirs(f"{temp_dir}")

@@ -24,7 +24,7 @@ class Distiller(tf.keras.Model):
 			preds, embeddings = self.model(x, training=True)
 			loss = self.student_loss_fn(y, preds)
 			distillation_loss = self.distillation_loss_fn(supervision_signal,embeddings)
-			r_loss = tf.add_n(self.model.losses)
+			r_loss = tf.add_n(self.model.losses) if self.model.losses else tf.constant(0.0)
 			loss  = loss + (self.alpha * distillation_loss) + r_loss
 		# Compute gradients
 		trainable_vars = self.model.trainable_variables
@@ -38,7 +38,7 @@ class Distiller(tf.keras.Model):
 
 	def test_step(self, data):
 		x, y = data
-		y_prediction = self.model(x, training=False)
+		y_prediction, _ = self.model(x, training=False)
 		student_loss = self.student_loss_fn(y, y_prediction)
 		self.compiled_metrics.update_state(y, y_prediction)
 		results = {m.name: m.result() for m in self.metrics}

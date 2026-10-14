@@ -50,7 +50,7 @@ class _Server(fl.server.Server):
 				input_shape=self.input_shape[1:],
 				num_classes=self.num_classes
 			)
-		self.model.compile(metrics=[tf.keras.metrics.CategoricalAccuracy(name='accuracy')])
+		self.model.compile(loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True), metrics=[tf.keras.metrics.CategoricalAccuracy(name='accuracy')])
 
 		if parameters is not None:
 			self.model.set_weights(parameters)
