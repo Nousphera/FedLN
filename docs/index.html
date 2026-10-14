@@ -12,7 +12,7 @@
 <meta name="citation_author" content="Nirvana Meratnia">
 <meta property="og:image" content="https://nousphera.github.io/assets/projects/fedln/overview.webp">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "ScholarlyArticle", "headline": "Labeling Chaos to Learning Harmony: Federated Learning with Noisy Labels", "description": "Federated clients have different amounts of label noise and different computational budgets. FedLN estimates noise on each client and offers three ways to limit its influence: correcting labels before training, adding adaptive knowledge distillation during local learning, or adjusting server aggregation to place more weight on reliable updates.", "author": [{"@type": "Person", "name": "Vasileios Tsouvalas"}, {"@type": "Person", "name": "Aaqib Saeed"}, {"@type": "Person", "name": "Tanir Ozcelebi"}, {"@type": "Person", "name": "Nirvana Meratnia"}], "datePublished": "2024", "url": "https://nousphera.github.io/projects/fedln/", "sameAs": ["https://doi.org/10.1145/3626242", "https://pure.tue.nl/ws/portalfiles/portal/320106480/3626242.pdf", "https://github.com/Nousphera/FedLN", "https://nousphera.github.io/assets/posters/fedln-a0-landscape.pdf"], "image": "https://nousphera.github.io/assets/projects/fedln/schematic.svg"}</script>
-<script src="/assets/projects.js?v=8580f9e45504" defer></script><script src="/assets/project-tabs.js?v=f44356a52ab1" defer></script><link rel="stylesheet" href="/assets/fedln-content.css?v=e3bb2d970dc4"><link rel="stylesheet" href="/assets/fedln-tour.css?v=05caae189d3d"><script src="/assets/fedln-tour.js?v=5ba0e2356ddc" defer></script></head><body><a class="skip" href="#main">Skip to content</a>
+<script src="/assets/projects.js?v=8580f9e45504" defer></script><script src="/assets/project-tabs.js?v=f44356a52ab1" defer></script><link rel="stylesheet" href="/assets/fedln-content.css?v=e3bb2d970dc4"><link rel="stylesheet" href="/assets/fedln-tour.css?v=d2ee9fe87b60"><script src="/assets/fedln-tour.js?v=0dffceb0e820" defer></script></head><body><a class="skip" href="#main">Skip to content</a>
 <header class="site-header"><div class="header-inner"><a class="brand" href="/" aria-label="Nousphera home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>Nousphera</a>
 <nav aria-label="Main navigation"><a class="nav-projects" href="/projects/">Projects</a><a class="about-link" href="https://vtsouval.github.io/"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></svg>About me</a><button class="theme-toggle" type="button" aria-label="Theme: automatic. Switch to light theme." title="Theme: automatic. Switch to light theme."><span data-theme-icon="auto"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M8 21h8m-4-4v4m0-18v14"/></svg></span><span data-theme-icon="light"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></span><span data-theme-icon="dark"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 13A9 9 0 0 1 11 3.2 9 9 0 1 0 20.8 13Z"/></svg></span><span data-theme-label>Auto</span></button></nav></div></header><main id="main" class="project-main fedln-page"><div class="breadcrumb"><a href="/projects/"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 5-7 7 7 7M5 12h14"/></svg>All projects</a><ul class="hero-topics" aria-label="Research topics"><li>Label noise</li><li>Federated learning</li><li>Knowledge distillation</li></ul></div>
 <section class="paper-hero" aria-labelledby="paper-title"><div class="eyebrow"><span class="project-name">FedLN</span><span>ACM TIST · 2024</span></div>
@@ -24,10 +24,10 @@
     <h2 id="fl-overview-title">Three ways to limit label noise</h2>
     <p class="fl-lead">Federated learning keeps data on clients, but <strong>incorrect labels can affect the shared model.</strong> FedLN estimates client noise and offers three places to intervene.</p>
   </div>
-  <section class="fl-tour" data-fl-tour data-active="network" data-running="false" data-nnc-phase="complete" aria-labelledby="fedln-tour-heading">
+  <section class="fl-tour" data-fl-tour data-active="network" data-running="false" data-nnc-phase="complete" data-akd-phase="complete" data-na-phase="complete" aria-labelledby="fedln-tour-heading">
   <header class="fl-tour-head">
     <p id="fedln-tour-heading">Three alternative interventions</p>
-    <button class="fl-tour-toggle" type="button" data-tour-toggle hidden aria-label="Play the 28-second overview"><span data-tour-play-icon aria-hidden="true"><svg class="fl-tour-icon-play" viewBox="0 0 20 20"><path d="m6 3 11 7-11 7Z"/></svg><svg class="fl-tour-icon-pause" viewBox="0 0 20 20"><rect x="4" y="3" width="4" height="14" rx="1"/><rect x="12" y="3" width="4" height="14" rx="1"/></svg></span><span data-tour-toggle-label>Play overview</span></button>
+    <button class="fl-tour-toggle" type="button" data-tour-toggle hidden aria-label="Play the 36-second overview"><span data-tour-play-icon aria-hidden="true"><svg class="fl-tour-icon-play" viewBox="0 0 20 20"><path d="m6 3 11 7-11 7Z"/></svg><svg class="fl-tour-icon-pause" viewBox="0 0 20 20"><rect x="4" y="3" width="4" height="14" rx="1"/><rect x="12" y="3" width="4" height="14" rx="1"/></svg></span><span data-tour-toggle-label>Play overview</span></button>
   </header>
   <div class="fl-tour-controls" data-tour-controls hidden>
     <nav class="fl-tour-stages" aria-label="Explore a FedLN intervention">
@@ -159,29 +159,94 @@
       </div>
     </div>
     <div class="fl-tour-scene fl-tour-akd" data-tour-scene="akd" hidden>
-      <div class="fl-tour-local-chip">Client B · during local training</div>
-      <div class="fl-tour-noise-gate"><span class="fl-tour-gate-dot"></span>High estimated local noise activates teacher guidance</div>
-      <div class="fl-tour-loss-branches">
-        <div class="fl-tour-loss-branch"><span class="fl-tour-micro">Observed labels</span><span class="fl-tour-loss-icon" aria-hidden="true">y</span><strong>Supervised loss</strong></div>
-        <div class="fl-tour-loss-branch fl-tour-teacher-branch"><span class="fl-tour-micro">Teacher guidance</span><svg viewBox="0 0 48 48" aria-hidden="true"><path d="m12 13 24 11-24 11M12 13v22M12 13l24 22M12 35 36 13M36 13v22"/><circle cx="12" cy="13" r="4"/><circle cx="12" cy="35" r="4"/><circle cx="36" cy="13" r="4"/><circle cx="36" cy="35" r="4"/><circle cx="24" cy="24" r="4"/></svg><span class="fl-tour-gate">Noise-gated</span><strong>Distillation loss</strong></div>
+      <div class="fl-tour-local-chip">Client B · embedding-teacher variant</div>
+      <div class="fl-tour-akd-story">
+        <div class="fl-tour-akd-example">
+          <span class="fl-tour-step-label">1 · Same local example</span>
+          <svg class="fl-tour-dog" viewBox="0 0 100 100" role="img" aria-label="Dog image">
+      <rect x="2" y="2" width="96" height="96" rx="15" fill="#edf2ed"/>
+      <path d="M8 80 29 59l16 17 17-23 30 27v12H8Z" fill="#dce7dd"/>
+      <path d="M31 29C14 19 11 39 16 59c2 10 12 10 17-2M69 29c17-10 20 10 15 30-2 10-12 10-17-2" fill="#9c652f" stroke="#65462e" stroke-width="2"/>
+      <path d="M27 38c0-23 46-23 46 0v24c0 26-46 26-46 0Z" fill="#dca55e" stroke="#65462e" stroke-width="2"/>
+      <path d="M46 23h8l5 33H41Z" fill="#fff0d9" opacity=".85"/>
+      <ellipse cx="50" cy="66" rx="18" ry="14" fill="#fff0d9"/>
+      <ellipse cx="37" cy="47" rx="3" ry="4" fill="#302c29"/><ellipse cx="63" cy="47" rx="3" ry="4" fill="#302c29"/>
+      <path d="M44 59q6-4 12 0l-6 7Z" fill="#302c29"/><path d="M50 66v5m-8-1q8 8 16 0" fill="none" stroke="#65462e" stroke-width="2" stroke-linecap="round"/>
+      <path d="M46 75q4 12 8 0" fill="#d7807f"/>
+    </svg>
+          <span class="fl-tour-image-caption">Stored label</span>
+          <span class="fl-tour-label fl-tour-label-wrong">Cat</span>
+        </div>
+        <div class="fl-tour-akd-models" data-tour-akd-part="teacher" data-visible="true" aria-hidden="false">
+          <span class="fl-tour-step-label">2 · Two views of the image</span>
+          <svg class="fl-tour-akd-fork" viewBox="0 0 28 142" preserveAspectRatio="none" aria-hidden="true"><path d="M0 71h10V22h18M10 71v49h18"/><path d="m23 18 5 4-5 4m0 90 5 4-5 4"/></svg>
+          <div class="fl-tour-teacher-model"><svg class="fl-tour-encoder-icon" viewBox="0 0 96 88" aria-hidden="true">
+      <rect x="13" y="9" width="70" height="65" rx="12"/>
+      <path class="fl-tour-encoder-connections" d="m29 27 19 15 19-15M29 57l19-15 19 15M29 27l19 30 19-30M29 57l19-30 19 30"/>
+      <g class="fl-tour-encoder-nodes"><circle cx="29" cy="27" r="4"/><circle cx="29" cy="57" r="4"/><circle cx="48" cy="27" r="4"/><circle cx="48" cy="42" r="4"/><circle cx="48" cy="57" r="4"/><circle cx="67" cy="27" r="4"/><circle cx="67" cy="57" r="4"/></g>
+      <rect class="fl-tour-lock-body" x="61" y="59" width="23" height="22" rx="5"/><path class="fl-tour-lock" d="M67 59v-5a6 6 0 0 1 12 0v5m-6 8v6"/>
+    </svg><div><strong>Frozen teacher</strong><span>Pre-trained encoder</span></div><div class="fl-tour-mini-features" aria-label="Teacher embedding"><i></i><i></i><i></i><i></i></div></div>
+          <div class="fl-tour-local-model"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="m12 13 24 11-24 11M12 13v22M12 13l24 22M12 35 36 13M36 13v22"/><circle cx="12" cy="13" r="4"/><circle cx="12" cy="35" r="4"/><circle cx="36" cy="13" r="4"/><circle cx="36" cy="35" r="4"/><circle cx="24" cy="24" r="4"/></svg><div><strong>Local model</strong><span>Trainable features<br>+ label prediction</span></div><div class="fl-tour-mini-features fl-tour-local-features" aria-label="Local model features"><i></i><i></i><i></i><i></i></div></div>
+          <span class="fl-tour-image-caption">Same image enters both</span>
+        </div>
+        <div class="fl-tour-akd-guidance" data-tour-akd-part="guidance" data-visible="true" aria-hidden="false">
+          <span class="fl-tour-step-label">3 · Add teacher guidance</span>
+          <span class="fl-tour-causal-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12h17m-6-6 6 6-6 6"/></svg></span>
+          <div class="fl-tour-client-gate"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h6m4 0h6M10 7v10M14 5v14"/><circle cx="20" cy="12" r="2"/></svg><span>Client noise detected<br><strong>Teacher signal enabled</strong></span></div>
+          <div class="fl-tour-teacher-signal"><span>Teacher signal</span><strong>Match image features</strong><svg class="fl-tour-feature-match" viewBox="0 0 170 43" role="img" aria-label="The local model learns to bring its features closer to the fixed teacher features"><g class="fl-tour-feature-labels"><text x="2" y="14">Teacher</text><text x="2" y="36">Local</text></g><path class="fl-tour-feature-guide" d="M75 11V32M110 11V32M145 11V32"/><g class="fl-tour-reference-features"><circle cx="75" cy="11" r="4"/><circle cx="110" cy="11" r="4"/><circle cx="145" cy="11" r="4"/></g><g class="fl-tour-learning-features"><circle cx="63" cy="32" r="4"/><circle cx="117" cy="32" r="4"/><circle cx="158" cy="32" r="4"/></g></svg></div>
+          <div class="fl-tour-label-signal"><span>Label signal</span><strong>Stored label ↔ prediction</strong></div>
+        </div>
+        <div class="fl-tour-akd-update" data-tour-akd-part="update" data-visible="true" aria-hidden="false">
+          <span class="fl-tour-step-label">4 · Train with both signals</span>
+          <span class="fl-tour-causal-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12h17m-6-6 6 6-6 6"/></svg></span>
+          <div class="fl-tour-updated-model"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="m12 13 24 11-24 11M12 13v22M12 13l24 22M12 35 36 13M36 13v22"/><circle cx="12" cy="13" r="4"/><circle cx="12" cy="35" r="4"/><circle cx="36" cy="13" r="4"/><circle cx="36" cy="35" r="4"/><circle cx="24" cy="24" r="4"/></svg><svg class="fl-tour-update-loop" viewBox="0 0 68 68" aria-hidden="true"><path d="M12 23A25 25 0 0 1 56 18m0 0V8m0 10H46M56 45A25 25 0 0 1 12 50m0 0v10m0-10h10"/></svg></div>
+          <strong>Local weights update</strong>
+          <span class="fl-tour-image-caption">Labels stay unchanged</span>
+          <span class="fl-tour-label fl-tour-label-wrong">Cat</span>
+        </div>
       </div>
-      <div class="fl-tour-loss-join" aria-hidden="true"><svg viewBox="0 0 400 48" preserveAspectRatio="none"><path d="M95 0V20H200V48M305 0V20H200"/><path class="fl-tour-guidance" d="M305 0V20H200V48"/></svg></div>
-      <div class="fl-tour-student"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="m12 13 24 11-24 11M12 13v22M12 13l24 22M12 35 36 13M36 13v22"/><circle cx="12" cy="13" r="4"/><circle cx="12" cy="35" r="4"/><circle cx="36" cy="13" r="4"/><circle cx="36" cy="35" r="4"/><circle cx="24" cy="24" r="4"/></svg><div><strong>Local model</strong><span>Supervised loss + gated teacher loss</span></div></div>
     </div>
     <div class="fl-tour-scene fl-tour-na" data-tour-scene="na" hidden>
-      <div class="fl-tour-local-chip">Server · after warm-up</div>
-      <div class="fl-tour-reliability-clients">
-        <div><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="12" y="4" width="24" height="40" rx="5"/><path d="M20 9h8M22 38h4"/><circle cx="24" cy="24" r="6"/></svg><strong>Client A</strong><span>Lower noise</span></div>
-        <div class="fl-tour-noisy-client"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="12" y="4" width="24" height="40" rx="5"/><path d="M20 9h8M22 38h4"/><circle cx="24" cy="24" r="6"/></svg><strong>Client B</strong><span>Higher noise</span></div>
-        <div><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="12" y="4" width="24" height="40" rx="5"/><path d="M20 9h8M22 38h4"/><circle cx="24" cy="24" r="6"/></svg><strong>Client C</strong><span>Lower noise</span></div>
+      <div class="fl-tour-local-chip">NA-FedAvg · equal-size client example</div>
+      <div class="fl-tour-na-story">
+        <div class="fl-tour-na-warmup">
+          <span class="fl-tour-step-label">1 · Warm up normally</span>
+          <svg class="fl-tour-warmup-art" viewBox="0 0 120 132" role="img" aria-label="Ordinary federated learning exchanges a global model and updates with clients A, B and C"><g class="fl-tour-warmup-lines"><path d="M60 40v23H20v28M60 63v28M60 63h40v28"/></g><g class="fl-tour-warmup-server"><rect x="38" y="9" width="44" height="14" rx="4"/><rect x="38" y="27" width="44" height="14" rx="4"/><path d="M46 16h1m8 0h18M46 34h1m8 0h18"/></g><g class="fl-tour-warmup-devices"><rect x="9" y="89" width="22" height="30" rx="5"/><rect x="49" y="89" width="22" height="30" rx="5"/><rect x="89" y="89" width="22" height="30" rx="5"/></g><g class="fl-tour-warmup-letters"><text x="20" y="109">A</text><text x="60" y="109">B</text><text x="100" y="109">C</text></g></svg>
+          <strong>Ordinary FedAvg</strong><span class="fl-tour-image-caption">Local training + aggregation</span>
+        </div>
+        <div class="fl-tour-na-scores" data-tour-na-part="scores" data-visible="true" aria-hidden="false">
+          <span class="fl-tour-step-label">2 · Score locally, once</span>
+          <span class="fl-tour-causal-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12h17m-6-6 6 6-6 6"/></svg></span>
+          <strong>Global + local models</strong><span class="fl-tour-image-caption">Confidence on local samples</span>
+          <div class="fl-tour-score-rows">
+            <div><b>Client A</b><svg viewBox="0 0 72 30" aria-hidden="true"><rect x="2" y="2" width="30" height="26" rx="4"/><rect x="40" y="2" width="30" height="26" rx="4"/><path d="M8 10h18M8 15h12M8 20h15M46 10h18M46 15h12M46 20h15"/></svg></div>
+            <div><b>Client B</b><svg viewBox="0 0 72 30" aria-hidden="true"><rect x="2" y="2" width="30" height="26" rx="4"/><rect x="40" y="2" width="30" height="26" rx="4"/><path d="M8 10h18M8 15h12M8 20h15M46 10h18M46 15h12M46 20h15"/></svg></div>
+            <div><b>Client C</b><svg viewBox="0 0 72 30" aria-hidden="true"><rect x="2" y="2" width="30" height="26" rx="4"/><rect x="40" y="2" width="30" height="26" rx="4"/><path d="M8 10h18M8 15h12M8 20h15M46 10h18M46 15h12M46 20h15"/></svg></div>
+          </div>
+          <span class="fl-tour-score-transfer">Send score sets to server</span><span class="fl-tour-image-caption">Raw data stay local</span>
+        </div>
+        <div class="fl-tour-na-noise" data-tour-na-part="noise" data-visible="true" aria-hidden="false">
+          <span class="fl-tour-step-label">3 · Estimate client noise</span>
+          <span class="fl-tour-causal-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12h17m-6-6 6 6-6 6"/></svg></span>
+          <div class="fl-tour-noise-server"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="7" width="36" height="14" rx="4"/><rect x="6" y="27" width="36" height="14" rx="4"/><path d="M14 14h1M14 34h1M23 14h11M23 34h11"/></svg><strong>At the server</strong></div>
+          <div class="fl-tour-noise-rows"><div><b>A</b><span>Lower noise</span></div><div class="fl-tour-noise-high"><b>B</b><span>Higher noise</span></div><div><b>C</b><span>Lower noise</span></div></div>
+          <span class="fl-tour-image-caption">Estimate once</span>
+        </div>
+        <div class="fl-tour-na-aggregation" data-tour-na-part="aggregation" data-visible="true" aria-hidden="false">
+          <span class="fl-tour-step-label">4 · Weight future updates</span>
+          <span class="fl-tour-causal-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12h17m-6-6 6 6-6 6"/></svg></span>
+          <strong>Data share × reliability</strong><span class="fl-tour-image-caption">1 − estimated noise</span>
+          <div class="fl-tour-contributions" role="img" aria-label="For equally sized clients, higher estimated noise gives client B less influence than clients A and C"><div><b>A</b><span><i></i></span></div><div class="fl-tour-contribution-noisy"><b>B</b><span><i></i></span></div><div><b>C</b><span><i></i></span></div></div>
+          <svg class="fl-tour-merge-updates" viewBox="0 0 120 22" aria-hidden="true"><path d="M20 1v6h40v13M60 1v19M100 1v6H60m-4 9 4 4 4-4"/></svg>
+          <div class="fl-tour-na-result"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="m12 13 24 11-24 11M12 13v22M12 13l24 22M12 35 36 13M36 13v22"/><circle cx="12" cy="13" r="4"/><circle cx="12" cy="35" r="4"/><circle cx="36" cy="13" r="4"/><circle cx="36" cy="35" r="4"/><circle cx="24" cy="24" r="4"/></svg><strong>Shared model</strong></div>
+          <span class="fl-tour-image-caption">Reuse estimates in later rounds</span>
+        </div>
       </div>
-      <div class="fl-tour-weighted-links" aria-hidden="true"><svg viewBox="0 0 600 82" preserveAspectRatio="none"><path class="fl-tour-strong-update" d="M95 0V35H300V82M505 0V35H300"/><path class="fl-tour-weak-update" d="M300 0V82"/><path class="fl-tour-weighted-packets" d="M95 0V35H300V82M505 0V35H300V82"/></svg></div>
-      <div class="fl-tour-weighted-server"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="7" width="36" height="14" rx="4"/><rect x="6" y="27" width="36" height="14" rx="4"/><path d="M14 14h1M14 34h1M23 14h11M23 34h11"/></svg><div><strong>Weighted global model</strong><span>Noisier updates have less influence</span></div></div>
     </div>
   </div>
   <p class="fl-tour-status fl-tour-sr-only" data-tour-status role="status" aria-live="polite" aria-atomic="true">Select a method or play the overview.</p>
   <div class="fl-tour-fallback">
-    <dl><div><dt>NNC · before training</dt><dd>A frozen encoder finds other local examples with similar image features. A vote among their stored labels corrects the sample’s label.</dd></div><div><dt>AKD · during training</dt><dd>A teacher loss is activated according to estimated local noise, alongside the supervised loss.</dd></div><div><dt>NA-FedAvg · at the server</dt><dd>After warm-up, estimated noise levels reduce the aggregation weight of noisier clients.</dd></div></dl>
+    <dl><div><dt>NNC · before training</dt><dd>A frozen encoder finds other local examples with similar image features. A vote among their stored labels corrects the sample’s label.</dd></div><div><dt>AKD · during training</dt><dd>For clients with detected noise, an embedding teacher guides local features alongside the original-label signal. The labels stay unchanged.</dd></div><div><dt>NA-FedAvg · at the server</dt><dd>After ordinary warm-up, clients send global- and local-model confidence scores once. The server estimates each client’s noise and reuses it to weight later updates by data share times estimated reliability.</dd></div></dl>
   </div>
 </section>
   <div class="fl-overview-note"><p><strong>Choose an intervention to fit the data and device.</strong> Label patterns, pretrained representations and available computation determine which route is useful.</p></div>
