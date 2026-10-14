@@ -19,3 +19,7 @@ remaining paper/source discrepancies are itemized in `docs/REPRODUCIBILITY.md`.
 The original requirements remain in `src/requirements.txt`; maintained pins are
 in the root requirements file. No private history, dataset or trained result was
 added. Synthetic features are generated fixtures, not recovered CLIP artifacts.
+
+Recovered SpeechCommands loader: author HomeLab archive `FedLN/data/spcm.py`,
+SHA-256 `73bfa53c0bba349a9596c4bf0695bf75cbea12c833abb83eccab8a9b8a3b6804`. Restored and repaired interface is
+documented in `docs/RECOVERED_DATA.md`; no dataset or model weights copied.

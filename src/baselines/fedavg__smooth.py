@@ -33,6 +33,7 @@ def load_available_datasets(train=True):
 		'eurosat': data.load_eurosat if train else data.load_eurosat_test, 
 		'cifar10': data.load_cifar if train else data.load_cifar_test,
         'synthetic': data.load_synthetic if train else data.load_synthetic_test,
+        'spcm': data.load_spcm if train else data.load_spcm_test,
 	}
 
 def load_available_models():

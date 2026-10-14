@@ -40,9 +40,9 @@ and needs a working NVIDIA setup; GPU and multi-host runs are not validated.
 The final TIST article describes three **alternative** methods: NNC corrects
 labels before local training; AKD applies MAE feature supervision to clients
 whose estimated noise exceeds 0.15; NA-FedAvg estimates energy scores once and
-then changes aggregation weights. This repository supplies CIFAR-10 and
-EuroSAT. It does not supply the final paper's full audio, human-noise,
-FashionMNIST or PathMNIST experimental pipelines.
+then changes aggregation weights. This repository supplies CIFAR-10, EuroSAT and a recovered prepared-record
+SpeechCommands path; see [RECOVERED_DATA.md](RECOVERED_DATA.md). It does not yet
+supply the final paper's human-noise, FashionMNIST or PathMNIST pipelines.
 
 A configuration matching the main paper's exposed CIFAR-10 settings is:
 

@@ -9,3 +9,5 @@ __all__ = [
 
 ]
 from .synthetic import load_synthetic, load_synthetic_test
+
+from .spcm import load_spcm, load_spcm_test

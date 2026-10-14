@@ -30,3 +30,7 @@ A focused regression now constructs the actual server/strategy and checks that
 Before the minimum-client floor, it scheduled zero. FedLN covers both its base
 server and NA-FedAvg override; FedCompress covers its compressed strategy.
 These focused checks passed after the repair.
+
+Recovered audio: three focused tests passed in 38.89 s, including generated
+TFRecord loading and actual two-round NNC/AKD CNN training. Details in
+[RECOVERED_DATA.md](RECOVERED_DATA.md).
