@@ -52,7 +52,9 @@ python run.py --method fedavg --dataset_name cifar10n \
 ## CLIP ViT-B/32 image features
 
 Use a separate Python 3.11 or 3.12 environment to avoid PyTorch/Transformers and
-TensorFlow 2.15 dependency conflicts. Prepare images using the training environment:
+TensorFlow 2.15 dependency conflicts. The optional environment pins PyTorch 2.14.1,
+torchvision 0.29.1, Transformers 5.19.0, NumPy 2.3.5 and Pillow 11.3.0.
+Prepare images using the training environment:
 
 ```bash
 python prepare_features.py --dataset cifar10 --data-root data \
@@ -68,10 +70,14 @@ python run.py --method nnc --dataset_name cifar10 \
 ```
 
 The extractor pins [OpenAI CLIP ViT-B/32](https://huggingface.co/openai/clip-vit-base-patch32)
-to revision `3d74acf9a28c67741b2f4f2ea7635f0aaf6f0268`, uses its official RGB
-resize/crop/normalization processor, and saves the 512-dimensional projected
+to revision `3d74acf9a28c67741b2f4f2ea7635f0aaf6f0268`, explicitly selects
+`AutoImageProcessor(..., backend="pil")` for its official RGB resize/crop/
+normalization, and saves the 512-dimensional projected
 image embeddings without external L2 normalization. This choice is explicit:
-the historical extraction normalization was not recovered. The first use
+the historical extraction normalization was not recovered. Explicit PIL selection
+preserves the earlier maintained extractor’s preprocessing when moving to
+Transformers 5, whose default torchvision backend changes interpolation results.
+The actual processor class/backend are recorded in the feature manifest. The first use
 downloads the checkpoint; `--local-files-only` uses a previously populated cache.
 Use the target dataset name for both preparation and output, including CIFAR-N.
 EuroSAT preparation reads `data/eurosat/eurosat.npz`; training also needs

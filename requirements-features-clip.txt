@@ -1,6 +1,7 @@
 # Separate Python3.11/3.12 environment; do not mix with TF2.15 training.
-torch==2.8.0
-torchvision==0.23.0
-transformers==4.57.3
-numpy>=1.26,<3
-Pillow>=10,<13
+# Verified current stack; model revision and PIL preprocessing are pinned in code.
+torch==2.14.1
+torchvision==0.29.1
+transformers==5.19.0
+numpy==2.3.5
+Pillow==11.3.0

@@ -39,9 +39,10 @@ TFRecord loading and actual two-round NNC/AKD CNN training. Details in
 ## Main-paper paths and authentic teachers
 
 Final complete suite: **43 tests passed in 119.53 s**. Training used Python 3.11,
-TensorFlow 2.15.1 and NumPy 1.26.4. Actual CLIP extraction used Python 3.12,
-PyTorch 2.8.0, Transformers 4.57.3, NumPy 2.5.4 and Pillow 12.3.0; actual
-TRILLsson used TensorFlow 2.15.1. Training `pip check`, compilation and whitespace
+TensorFlow 2.15.1 and NumPy 1.26.4. Initial CLIP extraction used Python 3.12,
+PyTorch 2.8.0 and Transformers 4.57.3; the optional environment was subsequently
+updated and revalidated as described below. Actual TRILLsson used TensorFlow
+2.15.1. Training `pip check`, compilation and whitespace
 checks passed. The configured remote CI has not been observed for this commit.
 
 The maintained additions validate FashionMNIST, PathMNIST and human-noise CIFAR
@@ -65,3 +66,18 @@ splits without downloading the full corpus. A second check ran generated
 waveforms through the maintained exporter, real TRILLsson, and CNN AKD.
 See [PAPER_DATA.md](PAPER_DATA.md) for exact teacher identities and the maintained
 recipe boundaries. These checks are execution evidence, not accuracy estimates.
+
+### Current CLIP environment check
+
+The same 32-image fixture and pinned CLIP model revision were extracted with
+Python 3.11.15, PyTorch 2.14.1, torchvision 0.29.1, Transformers 5.19.0,
+NumPy 2.3.5 and Pillow 11.3.0. These are the optional environment's current pins.
+Transformers 5 defaults to torchvision preprocessing; explicitly selecting the
+PIL backend preserves the earlier maintained processor's pixels. The extractor
+records its actual processor class/backend. With this selection, the 32×512
+embeddings were finite and matched the earlier output within `rtol=1e-4,
+atol=1e-5`; maximum absolute difference was `1.8597e-5`, mean absolute difference
+`7.4312e-7`, and maximum per-image relative L2 difference `3.3004e-6`. Outputs
+were not bitwise identical. This is a bounded compatibility check, not evidence
+of equivalent benchmark results. The TensorFlow training implementation did not
+change, so its previously passing 43-test suite was not rerun for this follow-up.
