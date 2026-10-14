@@ -99,3 +99,9 @@ See [CITATION.cff](CITATION.cff). The final journal publication is from 2024; th
 ## License
 
 The source retains its original [Apache License 2.0](LICENSE). Cite the authors when using this research implementation; external datasets retain their own terms.
+<!-- nousphera-project-resources -->
+## Project resources
+
+[Project page](https://nousphera.github.io/FedLN/) · [Research overview](https://nousphera.github.io/projects/fedln/) · [A0 poster](https://nousphera.github.io/FedLN/poster.pdf) · [Paper](https://doi.org/10.1145/3626242)
+
+This repository contains the research implementation. The project page and poster summarize the published method and reported experiments; this documentation update does not claim an independent reproduction of those experiments.
