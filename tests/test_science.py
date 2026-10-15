@@ -40,7 +40,7 @@ def test_client_forwards_seed_independently_of_batch_size():
 
 def test_energy_weights_support_noncontiguous_client_ids():
     from utils.energy_noise_estimation import compute_noise_estimation
-    # Historical >= threshold rule retained; IDs are identities, not row offsets.
+    # The >= threshold rule is used; IDs are identities, not row offsets.
     scores = np.array([[2, 0, 1], [2, 2, 3], [7, 1, 0], [7, 3, 0]], dtype=float)
     assert compute_noise_estimation(scores, percentile=50) == {2: .2, 7: 2}
 

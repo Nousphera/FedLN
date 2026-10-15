@@ -150,4 +150,4 @@ Machine-readable metadata: [CITATION.cff](CITATION.cff) · [BibTeX](citation.bib
 
 ## License
 
-[Apache-2.0](LICENSE). See [attribution](PROVENANCE.md). External datasets and pretrained models retain their own terms.
+[Apache-2.0](LICENSE). External datasets and pretrained models retain their own terms.

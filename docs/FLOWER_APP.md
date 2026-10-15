@@ -16,7 +16,7 @@ The server resolves logical IDs with `get_properties`, validates a complete
 unique partition mapping, samples with the configured seed, and sorts returned
 updates by logical ID. Worker restarts preserve client identity. Run-owned caches
 live on the shared local filesystem and persist across calls. Every run needs a
-new output directory. Client failures abort aggregation; tiny positive
+new output directory. Client failures abort aggregation; small positive
 participation still selects at least one client. NA-FedAvg additionally controls its all-client noise-estimation stage.
 
 ## Resources and configuration

@@ -29,7 +29,7 @@ def compute_noise_estimation(scores, percentile=75, noise_threshold=0.15, min_ef
 		noisy = np.count_nonzero(client_scores[:, 2] >= nu_percentile)
 		weights[int(cid)] = min(min_effect * n, n - noisy) if noisy / n >= noise_threshold else n
 	if sum(weights.values()) <= 0:
-		raise ValueError('Historical energy convention assigns zero total client impact')
+		raise ValueError('Energy weighting rule assigns zero total client impact')
 	return weights
 
 class NAFedAvg(fl.server.strategy.FedAvg):

@@ -12,7 +12,7 @@ import pytest
 
 
 @pytest.mark.parametrize('method', ['fedavg', 'na_fedavg'])
-def test_tiny_positive_participation_schedules_one_client(monkeypatch, method):
+def test_positive_fraction_participation_schedules_one_client(monkeypatch, method):
     import tensorflow as tf
     from utils.flwr_server import _Server
     monkeypatch.setenv('FEDLN_DEVICE', 'cpu')

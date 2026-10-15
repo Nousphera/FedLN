@@ -70,7 +70,7 @@ def main():
     manifest={'schema_version':1,'dataset':'speech_commands','tfds_version':tfds.__version__,
               'builder_version':str(builder.version),'labels':LABELS,'sample_rate':16000,
               'partition':'round-robin record shards; loader assigns shards to clients',
-              'speaker_ids_available':False,'paper_partition_recovered':False,
+              'speaker_ids_available':False,
               'limit_per_split':args.limit_per_split,'splits':{}}
     for split in ['train','validation','test']:
         dataset=builder.as_dataset(split=split,shuffle_files=False,

@@ -27,7 +27,7 @@ def write_records(root, split, shard, total, labels):
     np.savez(str(path)+'.npz',file_id=ids,label=labels)
 
 
-def test_recovered_audio_loader_preserves_ids_labels_and_counts(tmp_path, monkeypatch):
+def test_audio_loader_preserves_ids_labels_and_counts(tmp_path, monkeypatch):
     from data.spcm import load_spcm, load_spcm_test
     monkeypatch.setenv('TFDS_DATA_DIR',str(tmp_path))
     write_records(tmp_path,'train',0,2,[0,1,0,1])
