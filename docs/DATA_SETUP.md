@@ -4,7 +4,7 @@ Run commands from the repository root in the README's environment.
 `python scripts/prepare_data.py --help` lists datasets and modes.
 `--download` explicitly enables network acquisition; `--source` imports a safe
 NPZ or already-prepared directory. Import rejects existing destination files and
-symlinks in directory trees. `--validate` reads schema and content again and
+symlinks in directory trees. Imports validate in a temporary staging directory before publishing; failed imports leave no dataset or manifest behind. Directory imports copy only the selected dataset subtree, and auxiliary imports copy only supported media files. `--validate` reads schema and content again and
 compares the deterministic SHA-256 manifest; it never downloads. Omitting all
 three modes registers an already-present dataset after validating its schema.
 
@@ -110,7 +110,7 @@ export TFDS_DATA_DIR="$PWD/data/spcm-prepared"
 The exporter uses TFDS Speech Commands 0.0.3 and its published 12-label mapping.
 Without `--download`, it requires an existing TFDS cache. The validator checks
 train/test record IDs and labels against identity sidecars, then hashes all
-prepared files. Training clients cannot exceed the number of train shards.
+prepared files. Importing with `--source /path/to/prepared-root` retains the same relative paths and content hashes after relocation; validation restores any pre-existing `TFDS_DATA_DIR` setting. Set it explicitly to the final root for training. Training clients cannot exceed the number of train shards.
 `--limit-per-split` creates explicit bounded fixtures; these are not benchmark
 inputs. Run CLIP or TRILLsson extraction in the separate environments described
 in [PAPER_DATA.md](PAPER_DATA.md); keep teacher and source manifests together.

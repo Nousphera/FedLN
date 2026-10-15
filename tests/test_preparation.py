@@ -65,3 +65,66 @@ def test_public_archive_extraction_blocks_traversal(tmp_path):
         with pytest.raises(tarfile.FilterError):
             source.extractall(tmp_path / "safe")
     assert not (tmp_path / "escaped").exists()
+
+
+def test_existing_manifest_cannot_leave_a_half_published_array(tmp_path):
+    source = tmp_path / "input.npz"
+    fixture(source)
+    target = tmp_path / "prepared"
+    target.mkdir()
+    saved = target / "cifar10.manifest.json"
+    saved.write_text('{"existing":true}')
+    with pytest.raises((ValueError, FileExistsError)):
+        prep.main(["--dataset", "cifar10", "--source", str(source), "--root", str(target)])
+    assert not (target / "cifar10.npz").exists()
+    assert saved.read_text() == '{"existing":true}'
+
+
+@pytest.mark.parametrize('prior_root', [None, 'preserved-existing-root'])
+def test_audio_import_survives_relocation_and_restores_environment(tmp_path, monkeypatch, prior_root):
+    import json
+    import os
+    from test_audio_data import write_records
+    from data.spcm import load_spcm
+    source = tmp_path / 'source'
+    source.mkdir()
+    write_records(source, 'train', 0, 1, [0, 1])
+    write_records(source, 'test', 0, 1, [0, 1])
+    (source / 'unrelated-private.txt').write_text('not dataset input')
+    if prior_root is None:
+        monkeypatch.delenv('TFDS_DATA_DIR', raising=False)
+    else:
+        monkeypatch.setenv('TFDS_DATA_DIR', prior_root)
+    target = tmp_path / 'imported'
+    args = ['--dataset', 'spcm', '--root', str(target)]
+    result = prep.main([*args, '--source', str(source)])
+    assert os.environ.get('TFDS_DATA_DIR') == prior_root
+    assert prep.main([*args, '--validate']) == result
+    assert os.environ.get('TFDS_DATA_DIR') == prior_root
+    assert not (target / 'unrelated-private.txt').exists()
+    assert '.prepare-' not in json.dumps(result) and str(source) not in json.dumps(result)
+    assert not list(tmp_path.glob('.prepare-*'))
+    monkeypatch.setenv('TFDS_DATA_DIR', str(target))
+    data, classes, count, _, _ = load_spcm(0, 1, batch_size=2, shuffle=False)
+    assert classes == 12 and count == 2
+    assert next(iter(data))[0].shape == (2, 96, 64, 1)
+
+
+def test_array_publication_failure_rolls_back_both_files(tmp_path, monkeypatch):
+    source = tmp_path / "input.npz"
+    fixture(source)
+    target = tmp_path / "prepared"
+    real_link = prep.os.link
+    calls = []
+    def fail_manifest(source, destination):
+        calls.append(destination)
+        if str(destination).endswith(".manifest.json"):
+            raise OSError("publication failed")
+        return real_link(source, destination)
+    monkeypatch.setattr(prep.os, "link", fail_manifest)
+    with pytest.raises(OSError, match="publication failed"):
+        prep.main(["--dataset", "cifar10", "--source", str(source), "--root", str(target)])
+    assert len(calls) == 2
+    assert not (target / "cifar10.npz").exists()
+    assert not (target / "cifar10.manifest.json").exists()
+    assert not list(target.glob(".prepare-*"))
