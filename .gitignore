@@ -19,3 +19,7 @@ runs/
 build/
 dist/
 *.egg-info/
+/checkpoints/
+/results/
+/raw/
+.venvs/

@@ -199,3 +199,11 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+
+FedLN
+Copyright 2024 Vasileios Tsouvalas, Aaqib Saeed, Tanir Ozcelebi and Nirvana Meratnia.
+
+TRILLsson3 model conversion and audio frontend
+Based on the Apache-2.0 licensed TRILLsson model by Google Research Authors.
+Original model: https://www.kaggle.com/models/google/trillsson/TensorFlow2/nonsemantic-speech-benchmark-trillsson3/1
+The converted checkpoint preserves the original model's Apache-2.0 license.
