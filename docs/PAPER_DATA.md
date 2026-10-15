@@ -22,10 +22,10 @@ for the CC BY 4.0 terms.
 CIFAR-N uses human training labels and the clean original test labels. Obtain
 `CIFAR-10_human.pt` or `CIFAR-100_human.pt` from the
 [official annotation repository](https://github.com/UCSC-REAL/cifar-10-100n/tree/49df7d8a69e355470c77c1c2f2424916325a394b/data).
-Convert in the separate CLIP/PyTorch environment described below:
+Convert in the installed Python 3.11 environment:
 
 ```bash
-.venv-clip/bin/python prepare_human_labels.py --dataset cifar10n \
+python prepare_human_labels.py --dataset cifar10n \
   --input downloads/CIFAR-10_human.pt --output data/cifar10-human.npz
 # CIFAR-100N: --dataset cifar100n --input downloads/CIFAR-100_human.pt
 ```
@@ -48,17 +48,15 @@ python run.py --method fedavg --dataset_name cifar10n \
 
 ## CLIP ViT-B/32 image features
 
-Use a separate Python 3.11 or 3.12 environment to avoid PyTorch/Transformers and
-TensorFlow 2.15 dependency conflicts. The optional environment pins PyTorch 2.14.1,
-torchvision 0.29.1, Transformers 5.19.0, NumPy 2.3.5 and Pillow 12.3.0.
-Prepare images using the training environment:
+The Python 3.11 environment installed from `requirements.txt` includes both
+CLIP and TRILLsson extraction. It keeps NumPy 1.26.4 for TensorFlow 2.15 and
+Transformers 4.57.6 for compatibility with the Flower CLI. Prepare images and
+extract their features in that environment:
 
 ```bash
 python prepare_features.py --dataset cifar10 --data-root data \
   --output data/cifar10-clip-input.npz
-python3.12 -m venv .venv-clip
-.venv-clip/bin/python -m pip install -r requirements-features-clip.txt
-.venv-clip/bin/python extract_features.py --teacher clip \
+python extract_features.py --teacher clip \
   --input data/cifar10-clip-input.npz --output features/cifar10.npy
 python run.py --method nnc --dataset_name cifar10 \
   --embeddings_dir "$PWD/features" --knn_neighbors 100 \
@@ -68,10 +66,10 @@ python run.py --method nnc --dataset_name cifar10 \
 
 The extractor pins [OpenAI CLIP ViT-B/32](https://huggingface.co/openai/clip-vit-base-patch32)
 to revision `3d74acf9a28c67741b2f4f2ea7635f0aaf6f0268`, explicitly selects
-`AutoImageProcessor(..., backend="pil")` for its official RGB resize/crop/
+`CLIPImageProcessor` for its official RGB resize/crop/
 normalization, and saves the 512-dimensional projected
-image embeddings without external L2 normalization. The PIL backend fixes the resize/crop interpolation path; Transformers 5
-can otherwise select a different torchvision backend.
+image embeddings without external L2 normalization. The explicit PIL processor
+fixes the resize/crop interpolation path.
 The actual processor class/backend are recorded in the feature manifest. The first use
 downloads the checkpoint; `--local-files-only` uses a previously populated cache.
 Use the target dataset name for both preparation and output, including CIFAR-N.
@@ -84,13 +82,10 @@ The audio loader consumes waveform records exported from the twelve-label
 TFDS recipe:
 
 ```bash
-python -m pip install -r requirements-data-audio.txt
 python prepare_audio.py --tfds-cache data/tfds --output data/spcm-prepared \
   --train-shards 100 --download
 export TFDS_DATA_DIR="$PWD/data/spcm-prepared"
-python3.11 -m venv .venv-trillsson
-.venv-trillsson/bin/python -m pip install -r requirements-features-audio.txt
-.venv-trillsson/bin/python extract_features.py --teacher trillsson3 \
+python extract_features.py --teacher trillsson3 \
   --tfds-data-dir "$TFDS_DATA_DIR" --output features/spcm.npy
 python run.py --method akd --dataset_name spcm --model_name cnn \
   --embeddings_dir "$PWD/features" --embeddings_dims 1024 --knn_neighbors 100 \

@@ -23,7 +23,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install maintenance tools
-        run: python -m pip install -r requirements.txt -r requirements-simulation.txt cffconvert==2.0.0 PyYAML==6.0.3
+        run: python -m pip install -r requirements.txt cffconvert==2.0.0 PyYAML==6.0.3
       - name: Validate citation metadata
         run: cffconvert --validate
       - name: Compile Python sources

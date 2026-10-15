@@ -32,7 +32,7 @@ git clone https://github.com/Nousphera/FedLN.git
 cd FedLN
 python3.11 -m venv "$HOME/.venvs/fedln"
 source "$HOME/.venvs/fedln/bin/activate"
-python -m pip install -r requirements.txt -r requirements-simulation.txt
+python -m pip install -r requirements.txt
 python -m pip check
 ```
 
@@ -46,7 +46,7 @@ python scripts/prepare_data.py --dataset cifar10 --root data --validate
 The [dataset guide](docs/DATA_SETUP.md) covers CIFAR-10/100, CIFAR-N,
 FashionMNIST, PathMNIST, EuroSAT, and Speech Commands. NNC and AKD use aligned
 teacher features; follow the [CLIP and TRILLsson guide](docs/PAPER_DATA.md) to
-extract features and their source-identity manifests in a separate environment.
+extract features and their source-identity manifests in the same environment.
 CIFAR-N requires an explicit human-annotation key.
 
 ## Training

@@ -27,13 +27,13 @@ The selected federation's `options.num-supernodes` must equal the configured
 client count. CPU is the default; GPU runs also require matching backend GPU
 resources and the training CLI's device option.
 
-Install `requirements-simulation.txt` in the README's Python 3.11 environment.
+Install `requirements.txt` in the README's Python 3.11 environment.
 Flower 1.13.1 and Ray 2.10.0 are pinned. Create the checkout and virtual
 environment at final paths without spaces: Ray launches subprocesses using
 those paths, and a shell alias or symlink does not reliably change them.
 
 TensorFlow 2.15 requires a protobuf range compatible with Flower 1.13. Keep the
-pinned training and simulation requirements together.
+dependencies in `requirements.txt` together.
 
 `--run-config 'options="..."'` replaces the complete training argument string.
 Use the `paper` federation for the client count shown in the README, or edit a

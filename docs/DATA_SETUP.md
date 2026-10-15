@@ -59,7 +59,7 @@ python scripts/prepare_data.py --dataset fashionmnist --root data --validate
 ```
 
 For CIFAR-N, first prepare clean CIFAR-10/100 and convert official annotations
-with `prepare_human_labels.py` in the separate PyTorch environment documented in
+with `prepare_human_labels.py` in the installed environment documented in
 [PAPER_DATA.md](PAPER_DATA.md). No annotation key is silently chosen:
 
 ```bash
@@ -96,7 +96,6 @@ cannot be substituted.
 ## Speech Commands and teacher features
 
 ```bash
-python -m pip install -r requirements-data-audio.txt
 python prepare_audio.py --tfds-cache data/tfds --output data/spcm-prepared --train-shards 100 --download
 python scripts/prepare_data.py --dataset spcm --root data/spcm-prepared
 python scripts/prepare_data.py --dataset spcm --root data/spcm-prepared --validate
@@ -107,5 +106,5 @@ The exporter uses TFDS Speech Commands 0.0.3 and its published 12-label mapping.
 Without `--download`, it requires an existing TFDS cache. The validator checks
 train/test record IDs and labels against identity sidecars, then hashes all
 prepared files. Importing with `--source /path/to/prepared-root` retains the same relative paths and content hashes after relocation; validation restores any pre-existing `TFDS_DATA_DIR` setting. Set it explicitly to the final root for training. Training clients cannot exceed the number of train shards.
-`--limit-per-split` creates bounded fixtures for testing. Run CLIP or TRILLsson extraction in the separate environments described
+`--limit-per-split` creates bounded fixtures for testing. Run CLIP or TRILLsson extraction in the same environment as described
 in [PAPER_DATA.md](PAPER_DATA.md); keep teacher and source manifests together.

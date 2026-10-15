@@ -1,5 +1,0 @@
-# Separate Python3.11 environment for the official TRILLsson3 SavedModel.
-tensorflow==2.15.1
-tensorflow-hub==0.15.0
-numpy==1.26.4
-setuptools<81

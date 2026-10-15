@@ -16,12 +16,12 @@ TRILLSSON_HANDLE='https://tfhub.dev/google/nonsemantic-speech-benchmark/trillsso
 def extract_clip(input_path,batch_size=16,local_files_only=False):
     import torch
     from PIL import Image
-    from transformers import CLIPVisionModelWithProjection,AutoImageProcessor
+    from transformers import CLIPVisionModelWithProjection,CLIPImageProcessor
     with np.load(input_path,allow_pickle=False) as file:
         images=file['images'];ids=file['ids'];dataset=str(file['dataset']);digest=str(file['source_sha256'])
     if digest!=array_digest(images):raise ValueError('Prepared image content changed')
     model=CLIPVisionModelWithProjection.from_pretrained('openai/clip-vit-base-patch32',revision=CLIP_REVISION,local_files_only=local_files_only)
-    processor=AutoImageProcessor.from_pretrained('openai/clip-vit-base-patch32',revision=CLIP_REVISION,local_files_only=local_files_only,backend='pil')
+    processor=CLIPImageProcessor.from_pretrained('openai/clip-vit-base-patch32',revision=CLIP_REVISION,local_files_only=local_files_only)
     model.eval();torch.set_num_threads(1)
     output=[]
     with torch.inference_mode():
@@ -31,7 +31,7 @@ def extract_clip(input_path,batch_size=16,local_files_only=False):
             output.append(model(pixel_values=pixel_values).image_embeds.cpu().numpy())
     teacher=dict(name='openai/clip-vit-base-patch32',revision=CLIP_REVISION,output='image_embeds',
                  l2_normalized=False,preprocessing='official CLIP PIL processor; RGB conversion',
-                 processor_class=type(processor).__name__,processor_backend=processor.backend,
+                 processor_class=type(processor).__name__,processor_backend='pil',
                  transformers=importlib.metadata.version('transformers'),torch=torch.__version__)
     return np.concatenate(output),ids,dataset,digest,teacher
 
