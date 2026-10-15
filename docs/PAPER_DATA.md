@@ -53,7 +53,7 @@ python run.py --method fedavg --dataset_name cifar10n \
 
 Use a separate Python 3.11 or 3.12 environment to avoid PyTorch/Transformers and
 TensorFlow 2.15 dependency conflicts. The optional environment pins PyTorch 2.14.1,
-torchvision 0.29.1, Transformers 5.19.0, NumPy 2.3.5 and Pillow 11.3.0.
+torchvision 0.29.1, Transformers 5.19.0, NumPy 2.3.5 and Pillow 12.3.0.
 Prepare images using the training environment:
 
 ```bash

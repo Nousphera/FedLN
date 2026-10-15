@@ -71,7 +71,8 @@ recipe boundaries. These checks are execution evidence, not accuracy estimates.
 
 The same 32-image fixture and pinned CLIP model revision were extracted with
 Python 3.11.15, PyTorch 2.14.1, torchvision 0.29.1, Transformers 5.19.0,
-NumPy 2.3.5 and Pillow 11.3.0. These are the optional environment's current pins.
+NumPy 2.3.5 and Pillow 11.3.0. These were the optional environment's pins for this check;
+the maintained requirement now uses Pillow 12.3.0 (see the follow-up below).
 Transformers 5 defaults to torchvision preprocessing; explicitly selecting the
 PIL backend preserves the earlier maintained processor's pixels. The extractor
 records its actual processor class/backend. With this selection, the 32×512
@@ -82,6 +83,16 @@ were not bitwise identical. This is a bounded compatibility check, not evidence
 of equivalent benchmark results. The TensorFlow training implementation did not
 change, so its previously passing 43-test suite was not rerun for this follow-up.
 
+
+### Pillow 12.3 follow-up
+
+The maintained CLIP requirements now pin Pillow 12.3.0, which includes the fixes
+in [Pillow's release notes](https://pillow.readthedocs.io/en/stable/releasenotes/12.3.0.html).
+The same cached model revision and 32-image input were extracted again with the
+PIL processor and unchanged PyTorch/Transformers/NumPy versions. All 32×512
+features were finite, IDs matched, and the features were bitwise equal to the
+Pillow 11.3 output (maximum absolute difference zero). This checks this fixture's
+compatibility; it does not establish benchmark equivalence.
 
 ## Setup and native execution follow-up
 
