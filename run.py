@@ -1,4 +1,4 @@
-"""Run original FedLN clients and strategies sequentially with stock Flower transport."""
+"""Run FedLN clients and strategies sequentially with stock Flower transport."""
 import argparse
 import importlib.util
 import json
@@ -50,7 +50,7 @@ def main(argv=None, *, driver=None, client_id=None):
     tf.keras.utils.set_random_seed(args.seed)
     random.seed(args.seed)
     output.mkdir(parents=True, exist_ok=True)
-    report = {'method': options.method, 'paper_reproduction': False, 'backend': 'sequential-stock-flower',
+    report = {'method': options.method, 'backend': 'sequential-stock-flower',
               'config': {**vars(args), **{k: str(v) if isinstance(v, Path) else v for k,v in vars(options).items()}},
               'runtime': {'python': platform.python_version(), 'platform': platform.platform(),
                           'tensorflow': tf.__version__, 'flower': fl.__version__, 'numpy': np.__version__}, 'rounds': []}

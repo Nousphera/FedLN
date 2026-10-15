@@ -8,13 +8,11 @@ symlinks in directory trees. Imports validate in a temporary staging directory b
 compares the deterministic SHA-256 manifest; it never downloads. Omitting all
 three modes registers an already-present dataset after validating its schema.
 
-Prepared image files contain `train_images`, `train_labels`, `test_images` and
-`test_labels`. RGB images are uint8 NHWC (CIFAR 32x32, PathMNIST 28x28);
-FashionMNIST is uint8 NHW 28x28. Labels are integer IDs shaped N or Nx1. Shape,
-range, nonempty splits and counts are checked before copying. Training reads
-these files directly; original official loaders remain a fallback for legacy
-commands. Imported row order is preserved, including for teacher alignment.
-Small imported files are fixtures, not full benchmark datasets.
+Prepared image files contain `train_images`, `train_labels`, `test_images`, and
+`test_labels`. RGB images are uint8 NHWC with shape `(N,32,32,3)` for CIFAR. PathMNIST uses `(N,28,28,3)`; FashionMNIST uses uint8 `(N,28,28)`.
+Labels are integer IDs shaped `(N,)` or `(N,1)`. Preparation checks shapes,
+class ranges, nonempty splits, and counts. Training reads these files directly
+and preserves their row order.
 
 ```bash
 python scripts/prepare_data.py --dataset cifar10 --root datasets --source /path/to/cifar10.npz
@@ -22,15 +20,14 @@ python scripts/prepare_data.py --dataset cifar10 --root datasets --validate
 ```
 
 A manifest records dataset name, split sizes, class count and relative file
-paths/content hashes. It does not certify an arbitrary imported file as an
-original benchmark. Retain the source publication, data license and acquisition
-record separately. A changed file requires a new destination/preparation run;
+paths/content hashes. Retain the source publication, data license, and acquisition record alongside
+this manifest. A changed file requires a new destination/preparation run;
 manifests are not silently regenerated over changed data.
 
 ## Public vision sources
 
 [CIFAR-10/100](https://www.cs.toronto.edu/~kriz/cifar.html) use the official
-train/test splits via the pinned Keras or torchvision loader. Files are saved
+train/test splits via the pinned Keras loader. Files are saved
 as `ROOT/cifar10.npz` and `ROOT/cifar100.npz` for training:
 
 ```bash
@@ -90,12 +87,11 @@ python scripts/prepare_data.py --dataset eurosat --root data/eurosat-prepared --
 export TFDS_DATA_DIR="$PWD/data/eurosat-prepared"
 ```
 
-The recovered loader takes the first 21,600 rows for training and the remainder
-for testing. Exact historical array order is unavailable; importing a file does
-not verify compatibility with the legacy bundled embeddings. Extract new CLIP
-features against that exact source using [PAPER_DATA.md](PAPER_DATA.md).
-The class space is always 10 even if a split omits a class. No guessed download,
-shuffle or historical split is substituted for this explicit import contract.
+The loader takes the first 21,600 rows for training and the remaining 5,400
+for testing, preserving the supplied array order. The class space is fixed to
+ten. Extract CLIP features from this same file using [PAPER_DATA.md](PAPER_DATA.md)
+so source hashes and row IDs match; features from a differently ordered array
+cannot be substituted.
 
 ## Speech Commands and teacher features
 
@@ -111,6 +107,5 @@ The exporter uses TFDS Speech Commands 0.0.3 and its published 12-label mapping.
 Without `--download`, it requires an existing TFDS cache. The validator checks
 train/test record IDs and labels against identity sidecars, then hashes all
 prepared files. Importing with `--source /path/to/prepared-root` retains the same relative paths and content hashes after relocation; validation restores any pre-existing `TFDS_DATA_DIR` setting. Set it explicitly to the final root for training. Training clients cannot exceed the number of train shards.
-`--limit-per-split` creates explicit bounded fixtures; these are not benchmark
-inputs. Run CLIP or TRILLsson extraction in the separate environments described
+`--limit-per-split` creates bounded fixtures for testing. Run CLIP or TRILLsson extraction in the separate environments described
 in [PAPER_DATA.md](PAPER_DATA.md); keep teacher and source manifests together.

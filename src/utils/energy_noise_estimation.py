@@ -13,7 +13,7 @@ def compute_energy_score(model, data, cid=None):
 	return score
 
 def compute_noise_estimation(scores, percentile=75, noise_threshold=0.15, min_effect=0.1):
-	"""Retain the recovered >= threshold and capped-impact convention.
+	"""Apply the >= energy threshold and capped-impact weighting rule.
 
 	The final paper prose says below threshold; its Heaviside definition says
 	above. This implementation keeps the original choice, documented explicitly.

@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="500" viewBox="0 0 1200 500" role="img" aria-labelledby="title desc">
+  <title id="title">FedLN: three alternative interventions for noisy labels</title>
+  <desc id="desc">Choose among Nearest Neighbor Correction at initialization, Adaptive Knowledge Distillation during local training, or noise-aware aggregation at the server. These are alternatives suited to different client resources, not a required sequence.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="none" stroke="#956220" stroke-width="1.6" stroke-linejoin="round"/></marker>
+    <style>
+      text{font-family:Arial,Helvetica,sans-serif;fill:#29251f}
+      .stage{font-size:20px;letter-spacing:1.4px;fill:#956220;font-weight:700}
+      .method{font-size:25px;font-weight:700}
+      .body{font-size:22px;fill:#514a40}
+      .label{font-size:22px;font-weight:700}
+      .note{font-size:20px;fill:#75654f}
+      .card{fill:#fff;stroke:#e6d6bd;stroke-width:1.5}
+      .box{fill:#f9f2e7;stroke:#dbc5a1;stroke-width:1.5}
+      .flow{stroke:#956220;stroke-width:2.5;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1200" height="500" rx="20" fill="#fcfaf6"/>
+  <text x="600" y="48" text-anchor="middle" font-size="31" font-weight="700">Three alternatives for noisy labels</text>
+  <text x="600" y="82" text-anchor="middle" class="body">Select an intervention that matches client resources.</text>
+
+  <rect x="36" y="114" width="360" height="338" rx="18" class="card"/>
+  <text x="60" y="153" class="stage">INITIALIZATION</text>
+  <text x="60" y="191" class="method">Nearest Neighbor</text>
+  <text x="60" y="222" class="method">Correction (NNC)</text>
+  <rect x="60" y="250" width="128" height="55" rx="10" class="box"/>
+  <rect x="244" y="250" width="128" height="55" rx="10" class="box"/>
+  <text x="124" y="285" text-anchor="middle" class="label">Noisy</text>
+  <text x="308" y="285" text-anchor="middle" class="label">Corrected</text>
+  <path d="M199 277.5 H231" class="flow"/>
+  <text x="216" y="335" text-anchor="middle" class="note">Labels revised by neighbor vote</text>
+  <text x="60" y="391" class="body">Use pre-trained embeddings</text>
+  <text x="60" y="422" class="body">to correct local labels.</text>
+
+  <rect x="420" y="114" width="360" height="338" rx="18" class="card"/>
+  <text x="444" y="153" class="stage">LOCAL TRAINING</text>
+  <text x="444" y="191" class="method">Adaptive Knowledge</text>
+  <text x="444" y="222" class="method">Distillation (AKD)</text>
+  <rect x="444" y="250" width="128" height="55" rx="10" class="box"/>
+  <rect x="628" y="250" width="128" height="55" rx="10" class="box"/>
+  <text x="508" y="285" text-anchor="middle" class="label">Teacher</text>
+  <text x="692" y="285" text-anchor="middle" class="label">Student</text>
+  <path d="M583 277.5 H615" class="flow"/>
+  <text x="600" y="335" text-anchor="middle" class="note">Extra supervision when noisy</text>
+  <text x="444" y="391" class="body">Guide local learning with</text>
+  <text x="444" y="422" class="body">an adaptive distillation loss.</text>
+
+  <rect x="804" y="114" width="360" height="338" rx="18" class="card"/>
+  <text x="828" y="153" class="stage">SERVER AGGREGATION</text>
+  <text x="828" y="191" class="method">Noise-aware averaging</text>
+  <text x="828" y="222" class="method">(NA-FedAvg)</text>
+  <rect x="828" y="250" width="128" height="55" rx="10" class="box"/>
+  <rect x="1012" y="250" width="128" height="55" rx="10" class="box"/>
+  <text x="892" y="285" text-anchor="middle" class="label">Updates</text>
+  <text x="1076" y="285" text-anchor="middle" class="label">Global</text>
+  <path d="M967 277.5 H999" class="flow"/>
+  <text x="984" y="335" text-anchor="middle" class="note">Noise-weighted model aggregation</text>
+  <text x="828" y="391" class="body">Give noisier client updates</text>
+  <text x="828" y="422" class="body">less weight at the server.</text>
+  <text x="600" y="483" text-anchor="middle" class="note">Each approach acts at a different stage of federated learning.</text>
+</svg>

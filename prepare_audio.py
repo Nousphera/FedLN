@@ -1,4 +1,4 @@
-"""Export TFDS Speech Commands 0.0.3 to the recovered FedLN waveform schema."""
+"""Export TFDS Speech Commands 0.0.3 to FedLN waveform records."""
 import argparse
 import hashlib
 import json
@@ -58,7 +58,7 @@ def main():
     parser.add_argument('--output',type=Path,required=True,help='New prepared dataset root')
     parser.add_argument('--train-shards',type=int,default=100)
     parser.add_argument('--download',action='store_true',help='Download/prepare the official corpus if missing')
-    parser.add_argument('--limit-per-split',type=int,help='Explicit small-fixture limit; not a benchmark dataset')
+    parser.add_argument('--limit-per-split',type=int,help='Limit examples per split for a small test fixture')
     args=parser.parse_args()
     if args.output.exists():parser.error('Output root already exists')
     if args.train_shards<1 or (args.limit_per_split is not None and args.limit_per_split<args.train_shards):

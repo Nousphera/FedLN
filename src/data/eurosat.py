@@ -18,7 +18,7 @@ def eurosat_data_path():
 	root = Path(os.environ.get('TFDS_DATA_DIR', Path(__file__).resolve().parent))
 	path = root / 'eurosat' / 'eurosat.npz'
 	if not path.is_file():
-		raise FileNotFoundError(f"EuroSAT archive not found: {path}. See docs/REPRODUCIBILITY.md for the required data and embedding order.")
+		raise FileNotFoundError(f"EuroSAT archive not found: {path}. See docs/DATA_SETUP.md for the required data and embedding order.")
 	return path
 
 def load_eurosat(shard_id=0, num_shards=None, batch_size=128, seed=42, noisy_clients_frac=0.6, noise_lvl=0.4, noise_sparsity=0.4, corrected_labels=None, shuffle=True):

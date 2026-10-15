@@ -1,4 +1,4 @@
-"""Recovered prepared-TFRecord audio path; no corpus download."""
+"""Prepared-TFRecord audio loading and training on generated waveforms."""
 import os
 os.environ.setdefault('TF_CPP_MIN_LOG_LEVEL', '3')
 os.environ.setdefault('CUDA_VISIBLE_DEVICES', '-1')

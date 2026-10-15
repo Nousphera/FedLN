@@ -1,7 +1,7 @@
 """Single-host Flower transport; algorithms stay in the research core.
 
 Flower 1.13 rebuilds clients between messages. Stable partition IDs and run-owned
-on-disk state preserve the recovered methods across worker lifetimes. The local
+on-disk state preserve client state across worker lifetimes. The local
 simulation shares an absolute output directory; multi-host deployment is not
 supported by this adapter.
 """

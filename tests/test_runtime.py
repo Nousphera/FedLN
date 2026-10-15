@@ -105,7 +105,7 @@ class DataAndGpuTests(unittest.TestCase):
     def test_missing_eurosat_file_reports_expected_path(self):
         with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {"TFDS_DATA_DIR": directory}):
             module = self.eurosat_module()
-            with self.assertRaisesRegex(FileNotFoundError, "REPRODUCIBILITY"):
+            with self.assertRaisesRegex(FileNotFoundError, "DATA_SETUP"):
                 module.load_eurosat_test()
 
     def test_no_gpu_raises_instead_of_sleeping_forever(self):

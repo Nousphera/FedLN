@@ -1,6 +1,6 @@
-"""Maintained version of the recovered FedLN prepared-TFRecord audio loader.
+"""FedLN prepared-TFRecord audio loader.
 
-Original: HomeLab FedLN/data/spcm.py; see docs/RECOVERED_DATA.md.
+See docs/DATA_FORMATS.md for record and sidecar schemas.
 """
 import functools
 import os

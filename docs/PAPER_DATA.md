@@ -1,10 +1,8 @@
-# Paper data, teachers, and optimizer settings
+# Teacher features and optimizer settings
 
 The maintained code supports `cifar10`, `cifar100`, `cifar10n`, `cifar100n`,
-`fashionmnist`, `pathmnist`, `eurosat`, and `spcm`. The first three sections below
-provide executable preparation paths. These are maintained implementations;
-the exact historical teacher extraction scripts and all experiment manifests
-were not recovered. No dataset or pretrained model is redistributed here.
+`fashionmnist`, `pathmnist`, `eurosat`, and `spcm`. Use [DATA_SETUP.md](DATA_SETUP.md) to prepare inputs, then follow the teacher
+commands below. Dataset and model downloads use their public providers.
 
 ## Vision data and human annotations
 
@@ -19,7 +17,7 @@ as `data/pathmnist.npz` (official MD5 `a8b06965200029087d5bd730944a56c1`). The
 loader uses the official 89,996 training and 7,180 test images and nine-class
 space. It does not merge the 10,004-image validation split into training.
 See [MedMNIST's dataset metadata](https://github.com/MedMNIST/MedMNIST/blob/main/medmnist/info.py)
-for the CC BY 4.0 terms. The original paper's exact split manifest was not recovered.
+for the CC BY 4.0 terms.
 
 CIFAR-N uses human training labels and the clean original test labels. Obtain
 `CIFAR-10_human.pt` or `CIFAR-100_human.pt` from the
@@ -36,8 +34,7 @@ Conversion uses restricted `torch.load(weights_only=True)` with only the NumPy
 array types used by the official files allowed, validates all 50,000 rows, and
 records source/output hashes. Training requires `--human_labels` and an explicit
 `--human_noise_key`: CIFAR-10N accepts `worse_label`, `aggre_label`, or
-`random_label1/2/3`; CIFAR-100N accepts `noisy_label`. The paper does not identify
-the exact CIFAR-10N annotation key, so none is selected automatically. The
+`random_label1/2/3`; CIFAR-100N accepts `noisy_label`. Select the annotation key explicitly so the run records which human labels it uses. The
 annotation file's `clean_label` must exactly match the loaded training labels.
 TFDS's separately ordered annotation files are **not** interchangeable with
 Keras/Python CIFAR order. Synthetic noise arguments do not add noise to CIFAR-N.
@@ -73,21 +70,18 @@ The extractor pins [OpenAI CLIP ViT-B/32](https://huggingface.co/openai/clip-vit
 to revision `3d74acf9a28c67741b2f4f2ea7635f0aaf6f0268`, explicitly selects
 `AutoImageProcessor(..., backend="pil")` for its official RGB resize/crop/
 normalization, and saves the 512-dimensional projected
-image embeddings without external L2 normalization. This choice is explicit:
-the historical extraction normalization was not recovered. Explicit PIL selection
-preserves the earlier maintained extractor’s preprocessing when moving to
-Transformers 5, whose default torchvision backend changes interpolation results.
+image embeddings without external L2 normalization. The PIL backend fixes the resize/crop interpolation path; Transformers 5
+can otherwise select a different torchvision backend.
 The actual processor class/backend are recorded in the feature manifest. The first use
 downloads the checkpoint; `--local-files-only` uses a previously populated cache.
 Use the target dataset name for both preparation and output, including CIFAR-N.
 EuroSAT preparation reads `data/eurosat/eurosat.npz`; training also needs
-`TFDS_DATA_DIR="$PWD/data"`. Its historical array order remains an unresolved
-input requirement; the maintained extractor verifies the chosen array's order.
+`TFDS_DATA_DIR="$PWD/data"`. The extractor binds features to the selected array's content and row order.
 
 ## Speech Commands and TRILLsson 3
 
-The recovered training loader expects waveform records; a maintained exporter
-now creates them from the published twelve-label TFDS recipe:
+The audio loader consumes waveform records exported from the twelve-label
+TFDS recipe:
 
 ```bash
 python -m pip install -r requirements-data-audio.txt
@@ -106,28 +100,27 @@ python run.py --method akd --dataset_name spcm --model_name cnn \
 
 Without `--download`, the exporter requires an existing TFDS cache. The full
 corpus download is substantial. `--limit-per-split N` explicitly creates a
-bounded fixture, not a benchmark dataset. The exporter uses
+bounded fixture for testing. The exporter uses
 [TFDS 4.9.4 Speech Commands 0.0.3](https://github.com/tensorflow/datasets/blob/v4.9.4/tensorflow_datasets/datasets/speech_commands/speech_commands_dataset_builder.py),
 which provides the ten commands plus `_silence_` and `_unknown_`; it uses its
 published train/validation/test splits and background-noise recipe. Validation
 is exported but is not consumed by the existing training runner. Training rows
 are assigned dense deterministic IDs and round-robin record shards; source
 TFDS IDs are preserved in sidecars. TFDS does not expose speaker IDs in this
-schema; empty speaker fields are recorded explicitly. This is a maintained
-recipe, not a recovered exact historical partition or the paper's controlled
-25% quantity variance.
+schema; empty speaker fields are recorded explicitly. Whole record shards are assigned across clients; shard counts, rather than a
+fixed client quantity-variance target, determine this partition.
 
 The [official TRILLsson 3 SavedModel](https://tfhub.dev/google/nonsemantic-speech-benchmark/trillsson3/1)
 uses EfficientNetV2-B3 and returns 1,024-dimensional embeddings. The extractor
 passes complete mono 16 kHz PCM waveforms scaled by 32768, with no external L2
 normalization; the SavedModel owns its frontend and context padding. This is
-separate from the client's recovered L2-normalized random-window spectrogram
+separate from the client's L2-normalized random-window spectrogram
 pipeline. The model artifact hash and preprocessing are recorded. `--checkpoint`
 accepts a local SavedModel, whose actual hash is still recorded; callers are
-responsible for supplying the intended teacher. See [the recovered record
-schema](RECOVERED_DATA.md).
+responsible for supplying the intended teacher. See [the record
+schema](DATA_FORMATS.md).
 
-## Identity checks and saved evidence
+## Identity checks and outputs
 
 Each extractor writes `<dataset>.npy`, `<dataset>.ids.npy`, and
 `<dataset>.manifest.json`. Output reuse is rejected. Features are reordered by
@@ -138,11 +131,11 @@ NNC/AKD validate these artifacts against the current data before selecting
 client rows. Audio loading additionally checks actual record IDs and labels
 against the sidecars in record order. Altered order/content raises an error.
 
-The two legacy bundled vision arrays lack these manifests and emit an explicit
-unverified-alignment warning. Use newly extracted features for an auditable
-run. Results retain configuration, runtime versions, input/feature hashes and
-feature metadata, metrics, and final global parameters. A final parameter NPZ
-is not a resumable optimizer/client-cache checkpoint.
+Use newly extracted features with their manifests. Bundled arrays without a
+manifest trigger an alignment warning because their row identity cannot be
+validated against the current inputs. Results retain configuration, runtime versions, input/feature hashes and
+feature metadata, metrics, and final global parameters. Final parameter NPZ exports contain model weights; each run initializes its
+optimizer and private client state.
 
 ## Optimizers and AKD objectives
 
@@ -156,8 +149,7 @@ The first two rows follow final-paper §5.2. CIFAR-N/100 reuse the CIFAR family
 setting explicitly; the paper does not specify a separate optimizer for each
 human-noise experiment. `--optimizer`, `--lr`, and `--momentum` override defaults
 and are saved in results. The setting reaches all maintained client training
-and confident-learning cross-validation. This corrects the old source's
-unconditional Adam, so CIFAR trajectories change.
+and confident-learning cross-validation.
 
 AKD defaults to `--akd_teacher embeddings`: the existing MAE between the local
 projection and teacher features, weighted by `--kd_beta 10`. Temperature does
@@ -169,6 +161,4 @@ classifier alone is aggregated; the teacher is neither updated nor uploaded.
 Both modes still need aligned pretrained features to estimate each client's
 noise once from its local labels. Distillation activates at/after
 `--distil_round` when estimated disagreement reaches `--noise_threshold .15`.
-The threshold comparison preserves the recovered `>=` convention. Global
-teacher execution is a maintained implementation of the equation, not recovered
-original experimental code.
+The threshold comparison uses `>=`.

@@ -1,48 +1,13 @@
-# Provenance
+# Attribution
 
-This repository is an independent Nousphera copy of [FedLN](https://github.com/FederatedML/FedLN). The original FederatedML repository remains in place.
+FedLN is developed by Vasileios Tsouvalas, Aaqib Saeed, Tanir Özçelebi, and
+Nirvana Meratnia. This repository retains the history and author attribution of
+[FederatedML/FedLN](https://github.com/FederatedML/FedLN), based on commit
+[`01e4afe26fba92b8ed0fd7e2b16b044fba0d2588`](https://github.com/FederatedML/FedLN/commit/01e4afe26fba92b8ed0fd7e2b16b044fba0d2588).
+The `federatedml-baseline` tag identifies that version.
 
-- Source commit: [`01e4afe26fba92b8ed0fd7e2b16b044fba0d2588`](https://github.com/FederatedML/FedLN/commit/01e4afe26fba92b8ed0fd7e2b16b044fba0d2588)
-- Source branch: `main`
-- Baseline tag in this repository: `federatedml-baseline`
-- Original Git history and author attribution are retained.
-
-Maintenance changes after this baseline improve documentation, setup, and validation. They do not constitute a new reproduction of the published experiments. For the original code and configuration, inspect the baseline tag.
-
-GitHub issues, pull requests, stars, releases, and Pages configuration are not part of Git history and have not been transferred. Existing discussions remain at the source repository.
-
-## Maintained execution release (2026-10-15)
-
-The new `run.py` uses the original clients/models/strategies, CPU execution and
-stock Flower serialization. Numerical bug fixes, AKD projection ownership and
-remaining paper/source discrepancies are itemized in `docs/REPRODUCIBILITY.md`.
-The original requirements remain in `src/requirements.txt`; maintained pins are
-in the root requirements file. No private history, dataset or trained result was
-added. Synthetic features are generated fixtures, not recovered CLIP artifacts.
-
-Recovered SpeechCommands loader: author HomeLab archive `FedLN/data/spcm.py`,
-SHA-256 `73bfa53c0bba349a9596c4bf0695bf75cbea12c833abb83eccab8a9b8a3b6804`. Restored and repaired interface is
-documented in `docs/RECOVERED_DATA.md`; no dataset or model weights copied.
-
-## Dataset and teacher completion
-
-`prepare_features.py`, `extract_features.py`, `prepare_audio.py`, and
-`prepare_human_labels.py` are maintained implementations, not recovered historical
-extractors. They use public model/dataset APIs and record hashes rather than
-redistributing weights or datasets. Public source revisions and explicit data
-recipes are documented in `docs/PAPER_DATA.md`. The global-logit AKD option is
-a maintained implementation of the final paper's printed Eq. 9.
-
-
-## Reproducible setup follow-up
-
-Added dataset import/download/validation commands and deterministic file manifests.
-Prepared NPZ files feed the maintained trainer directly. Image labels and shapes
-are validated against fixed dataset class spaces; explicit dataset imports do not
-certify historical order, partitions or benchmark equivalence. Existing source,
-teacher identity and cache qualifications are retained in the linked guides.
-
-Added real Flower ClientApp/ServerApp entry points reusing the maintained core.
-Logical partition IDs determine sampling and persistent local state; evaluated
-global weights and round results are saved. Flower 1.13/Ray 2.10 remain pinned for
-compatibility. See docs/FLOWER_APP.md for single-host simulation limits.
+The software is licensed under [Apache-2.0](LICENSE). Dataset and pretrained
+model terms apply separately. The CLIP/TRILLsson models and dataset sources are
+linked in [teacher preparation](docs/PAPER_DATA.md) and
+[dataset setup](docs/DATA_SETUP.md). Current algorithm settings are specified in
+[METHODS.md](docs/METHODS.md).
